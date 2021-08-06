@@ -8,6 +8,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurationSupp
  * @author wuyou
  */
 @Configuration
+@SuppressWarnings("AlibabaClassNamingShouldBeCamel")
 public class CORSConfiguration extends WebMvcConfigurationSupport {
 
     /**

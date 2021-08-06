@@ -23,6 +23,7 @@ import java.util.stream.Collectors;
  * 2020年5月3日
  */
 @Component
+@SuppressWarnings("unused")
 public class Cat {
     public static final CatCodeUtil UTILS = CatCodeUtil.getInstance();
     final static CodeTemplate<Neko> NEKO_TEMPLATE = UTILS.getNekoTemplate();
@@ -36,7 +37,7 @@ public class Cat {
      * @param qq        QQ号
      * @return 格式化之后的文本
      */
-    public static String formatQQ(String fromGroup, String qq) {
+    public static String formatQq(String fromGroup, String qq) {
         if (qq.isEmpty()) {
             return qq;
         }
@@ -76,6 +77,13 @@ public class Cat {
             return false;
         }
     }
+    /**
+     * 获取艾特bot的猫猫码
+     *
+     */
+    public static String atBot() {
+        return Cat.at(GlobalVariable.getDefaultBotCode());
+    }
 
     /**
      * 艾特全体
@@ -92,33 +100,19 @@ public class Cat {
      */
     public static String startsWithAt(String msg) {
         List<String> list = UTILS.split(msg);
-        Neko code = UTILS.getNeko(list.get(0), "at");
+        Neko code = UTILS.getNeko(list.get(0), StringVariable.AT);
         if (code != null) {
             return code.get("code");
         }
         return "";
     }
-//
-//    /**
-//     * 获取所有艾特的QQ号
-//     */
-//    public static Set<String> getAts(String msg) {
-//        final List<Neko> list = UTILS.getNekoList(msg, "at");
-//        Set<String> set = new HashSet<>();
-//        for (Neko neko : list) {
-//            if (neko.get("code") != null) {
-//                set.add(neko.get("code"));
-//            }
-//        }
-//        return set;
-//    }
 
     /**
      * 获取所有艾特的QQ号
      */
     public static Set<String> getAts(MessageGet msg) {
         Set<String> set = new HashSet<>();
-        for (Neko neko : msg.getMsgContent().getCats("at")) {
+        for (Neko neko : msg.getMsgContent().getCats(StringVariable.AT)) {
             if (neko.get("code") != null) {
                 set.add(neko.get("code"));
             }
@@ -130,7 +124,7 @@ public class Cat {
      * 获取所有艾特的QQ号的KQ码
      */
     public static Set<Neko> getAtKqs(String msg) {
-        final List<Neko> list = UTILS.getNekoList(msg, "at");
+        final List<Neko> list = UTILS.getNekoList(msg, StringVariable.AT);
         return new HashSet<>(list);
     }
 
@@ -230,10 +224,9 @@ public class Cat {
      */
     public static Neko get163Music(String music) {
         System.out.println(music);
-        String resp = HttpUtil.get("http://music.163.com/api/search/get/web?type=1&s=" + music).getResponse();
+        String resp = HttpUtil.get("https://music.163.com/api/search/get/web?type=1&s=" + music).getResponse();
         System.out.println(resp);
         JSONObject json = JSONObject.parseObject(resp);
-        Map<String, String> map = new HashMap<>();
         JSONArray jsonArray = json.getJSONObject("result").getJSONArray("songs");
         JSONObject jsonObject = jsonArray.getJSONObject(0);
         String id = jsonObject.getString("id");
@@ -243,9 +236,7 @@ public class Cat {
             return object.getString("name");
         }).collect(Collectors.toList());
         String artists = String.join("&", artistList);
-//        String song = "https://api.imjad.cn/cloudmusic/?type=song&id=" + id;
-        String song = "http://music.163.com/song/media/outer/url?id=" + id + ".mp3";
-//        String url = JSONObject.parseObject(HttpUtils.get(song).getResponse()).getJSONArray("data").getJSONObject(0).getString("url");
+        String song = "https://music.163.com/song/media/outer/url?id=" + id + ".mp3";
         String detail = "https://api.imjad.cn/cloudmusic/?type=detail&id=" + id;
         String preview = JSONObject.parseObject(HttpUtil.get(detail).getResponse()).getJSONArray("songs").getJSONObject(0).getJSONObject("al").getString("picUrl");
         String jumpUrl = "https://music.163.com/#/song?id=" + id;
@@ -277,7 +268,7 @@ public class Cat {
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
         }
-        String url = "http://dl.stream.qqmusic.qq.com/" + JSONObject.parseObject(HttpUtil.get(song).getResponse()).getJSONObject("req_0").getJSONObject("data").getJSONArray("midurlinfo").getJSONObject(0).getString("purl");
+        String url = "https://dl.stream.qqmusic.qq.com/" + JSONObject.parseObject(HttpUtil.get(song).getResponse()).getJSONObject("req_0").getJSONObject("data").getJSONArray("midurlinfo").getJSONObject(0).getString("purl");
         String jumpUrl = "https://y.qq.com/n/ryqq/songDetail/" + mid;
         String preview = "https:" + HttpUtil.getJson(HttpUtil.get(jumpUrl).getResponse(), "__INITIAL_DATA__").getJSONObject("detail").getString("picurl");
         String title = jsonObject.getString("name");

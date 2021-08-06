@@ -9,6 +9,7 @@ public enum RestCode {
      * 返回的状态码和msg
      */
     OK(0, "ok"),
+    @SuppressWarnings("unused")
     ERROR(1, "未知异常"),
     ;
     public final int code;

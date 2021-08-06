@@ -16,6 +16,7 @@ public class RequestEntity {
     String response;
     Object otherEntity;
 
+    @SuppressWarnings("unused")
     public String getCookie(String cookieName) {
         for (Cookie cookie : cookies) {
             if (cookie.getName().equals(cookieName)) {

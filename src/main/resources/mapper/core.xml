@@ -6,7 +6,4 @@
     <select id="getListeners" resultType="java.util.Map">
         select * from listener
     </select>
-    <select id="getFilters" resultType="java.util.Map">
-        select * from filter
-    </select>
 </mapper>

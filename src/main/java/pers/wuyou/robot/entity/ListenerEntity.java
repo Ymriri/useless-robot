@@ -5,10 +5,11 @@ import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import org.apache.commons.lang3.StringUtils;
+import pers.wuyou.robot.core.Listener;
+import pers.wuyou.robot.core.MessageUtil;
 
 import java.io.Serializable;
-import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 
 /**
  * <p>
@@ -52,6 +53,11 @@ public class ListenerEntity implements Serializable {
      * 监听器方法名
      */
     private String methodName;
+
+    /**
+     * 过滤器字段名
+     */
+    private String filterName;
 
     /**
      * 是否需要开机
@@ -108,49 +114,32 @@ public class ListenerEntity implements Serializable {
     }
 
     public Integer[] getBreakListeners() {
-        String[] strings = this.breakListeners.split(",");
+        String[] strings = breakListeners.split(",");
         Integer[] integers = new Integer[strings.length];
         for (int i = 0; i < strings.length; i++) {
             integers[i] = strings[i].isEmpty() ? -1 : Integer.parseInt(strings[i]);
         }
         return integers;
     }
+    
+    public Listener getListener(Object o, Method method){
+        return Listener.builder()
+                .id(id)
+                .instance(o)
+                .method(method)
+                .name(name)
+                .priority(priority)
+                .breakListeners(getBreakListeners())
+                .trim(trim)
+                .atBot(atBot)
+                .atAny(atAny)
+                .isBoot(isBoot)
+                .at(at)
+                .codes(codes)
+                .groups(groups)
+                .isSpare(isSpare)
+                .filterName(MessageUtil.getDefaultValue(id, filterName))
+                .build();
+    }
 
-    public String[] getStringArray(String key) {
-        try {
-            for (Field declaredField : this.getClass().getDeclaredFields()) {
-                if(declaredField.getName().equals(underlineToHump(key))){
-                    return declaredField.get(this).toString().split(",");
-                }
-            }
-        } catch (Exception ignored) {
-        }
-        return new String[]{};
-    }
-    /***
-     * 下划线命名转为驼峰命名.
-     *
-     * @param para 下划线命名的字符串
-     */
-    private String underlineToHump(String para) {
-        if (StringUtils.isBlank(para)) {
-            return para;
-        }
-        StringBuilder result = new StringBuilder();
-        String[] a = para.split("_");
-        if (a.length != 1) {
-            for (String s : a) {
-                if (result.length() == 0) {
-                    result.append(s.toLowerCase());
-                } else {
-                    result.append(s.substring(0, 1).toUpperCase());
-                    result.append(s.substring(1).toLowerCase());
-                }
-            }
-        } else {
-            result.append(a[0].substring(0, 1).toLowerCase());
-            result.append(a[0].substring(1));
-        }
-        return result.toString();
-    }
 }

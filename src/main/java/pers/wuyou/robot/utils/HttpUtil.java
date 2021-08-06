@@ -30,6 +30,7 @@ import java.util.Map;
  *
  * @author wuyou
  */
+@SuppressWarnings("unused")
 public class HttpUtil {
     private static final CookieStore STORE;
     private static final CloseableHttpClient CLOSEABLE_HTTP_CLIENT;
@@ -94,8 +95,6 @@ public class HttpUtil {
      * @param cookies 请求携带的cookie
      */
     public static RequestEntity post(String url, Map<String, String> params, Map<String, String> cookies) {
-//        System.out.println(cookies);
-//        System.out.println(params);
         try {
             HttpPost httpPost = new HttpPost(url);
             if (params != null) {
@@ -116,7 +115,7 @@ public class HttpUtil {
     /**
      * 设置cookie
      */
-    private static void setCookies(HttpRequestBase httpRequestBase, Map<String, String> cookies) {
+    protected static void setCookies(HttpRequestBase httpRequestBase, Map<String, String> cookies) {
         if (cookies != null) {
             StringBuilder cookie = new StringBuilder();
             cookies.forEach((key, value) -> cookie.append(key).append("=").append(value).append(";"));
@@ -134,11 +133,9 @@ public class HttpUtil {
             return GlobalVariable.THREAD_POOL.submit(() -> {
                 RequestEntity requestEntity = new RequestEntity();
                 httpRequestBase.setHeader("User-Agent", "Mozilla/5.0 (Windows NT 5.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/38.0.2125.122 Safari/537.36 SE 2.X MetaSr 1.0");
-//                System.out.println(Arrays.toString(httpRequestBase.getHeaders("Cookie")));
                 try (CloseableHttpResponse closeableHttpResponse = CLOSEABLE_HTTP_CLIENT.execute(httpRequestBase)) {
                     requestEntity.setResponse(EntityUtils.toString(closeableHttpResponse.getEntity(), "UTF-8"));
                     requestEntity.setCookies(STORE.getCookies());
-//                    System.out.println(Arrays.toString(closeableHttpResponse.getAllHeaders()));
                     httpRequestBase.setHeader("Cookie", "");
                     STORE.clear();
                 } catch (IOException e) {

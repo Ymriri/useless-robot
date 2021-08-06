@@ -3,17 +3,9 @@
 <mapper namespace="pers.wuyou.robot.mapper.ListenerValueMapper">
 
     <select id="getDefaultValue" resultType="java.lang.String">
-        select ifnull(
-        (
         select value from listener_value join listener_values lv on listener_value.id = lv.value_id
         <where>
             name = #{name} and listener_id = #{id}
         </where>
-        ),
-        (select value from default_value
-        <where>
-            name = #{name}
-        </where>)
-        ) as value
     </select>
 </mapper>

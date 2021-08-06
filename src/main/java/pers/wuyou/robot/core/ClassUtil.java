@@ -1,6 +1,6 @@
 package pers.wuyou.robot.core;
 
-import pers.wuyou.robot.common.GlobalVariable;
+import pers.wuyou.robot.common.StringVariable;
 import pers.wuyou.robot.exception.ObjectNotFoundException;
 
 import java.lang.reflect.Method;
@@ -34,7 +34,7 @@ public class ClassUtil {
     }
 
     public static Object getInstance(String type, String clazz) throws InstantiationException, IllegalAccessException, ClassNotFoundException {
-        if (GlobalVariable.LISTENER.equals(type)) {
+        if (StringVariable.LISTENER.equals(type)) {
             for (String listenerPackage : listenerPackages) {
                 String classPath = listenerPackage + "." + clazz;
                 if (LISTENER_INSTANCE_MAP.get(classPath) == null) {
@@ -62,7 +62,7 @@ public class ClassUtil {
     }
 
     public static Class<?> getClass(String type, String clazz) throws ClassNotFoundException {
-        if (GlobalVariable.LISTENER.equals(type)) {
+        if (StringVariable.LISTENER.equals(type)) {
             for (String listenerPackage : listenerPackages) {
                 String classPath = listenerPackage + "." + clazz;
                 if (LISTENER_CLASS_MAP.get(classPath) == null) {

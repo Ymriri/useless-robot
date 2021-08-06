@@ -14,6 +14,6 @@ import java.lang.annotation.*;
 @Documented
 @Import({ScanUtil.class, SimbotAppInfoConfiguration.class})
 public @interface UselessScan {
+    @SuppressWarnings("unused")
     String[] listenerPackages() default {};
-//    String[] filterPackages() default {};
 }

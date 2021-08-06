@@ -6,6 +6,7 @@ import lombok.Data;
  * @author wuyou
  */
 @Data
+@SuppressWarnings("unused")
 public class RestResponse<T> {
     private int code;
     private String msg;

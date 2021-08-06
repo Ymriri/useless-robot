@@ -21,18 +21,16 @@ import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Configuration;
 import pers.wuyou.robot.common.Cat;
 import pers.wuyou.robot.common.GlobalVariable;
+import pers.wuyou.robot.common.StringVariable;
 import pers.wuyou.robot.core.annotation.DefaultValue;
 import pers.wuyou.robot.core.annotation.Injection;
 import pers.wuyou.robot.core.annotation.InjectionValue;
 import pers.wuyou.robot.entity.ListenerEntity;
-import pers.wuyou.robot.exception.ObjectCountBeyondException;
-import pers.wuyou.robot.exception.ObjectNotPresentException;
+import pers.wuyou.robot.exception.*;
 import pers.wuyou.robot.mapper.ListenerMapper;
-import pers.wuyou.robot.mapper.ListenerValueMapper;
 import pers.wuyou.robot.utils.LoggerUtil;
 import pers.wuyou.robot.utils.SenderUtil;
 
-import java.io.FileNotFoundException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
@@ -46,21 +44,20 @@ import static pers.wuyou.robot.common.GlobalVariable.sender;
  */
 @Configuration
 public class RobotCore implements CommandLineRunner {
+    public static final Map<Integer, Listener> LISTENER_ID_LIST = new HashMap<>();
     public static final Map<Class<? extends MsgGet>, Listener> SPARE_LISTENER_MAP = new HashMap<>();
     public static final Map<Class<? extends MsgGet>, Listener> SPARE_LISTENER_MAP_BACKUP = new HashMap<>();
     public static final Map<Class<? extends MsgGet>, List<Listener>> LISTENER_MAP = new HashMap<>();
     public static final Map<Class<? extends MsgGet>, List<Listener>> LISTENER_MAP_BACKUP = new HashMap<>();
     private final ListenerMapper listenerMapper;
-    private final ListenerValueMapper listenerValueMapper;
     private final ConfigurableApplicationContext applicationContext;
     private int loadCount = 1;
 
 
     @Autowired
-    public RobotCore(ConfigurableApplicationContext applicationContext, ListenerMapper listenerMapper, ListenerValueMapper listenerValueMapper) {
+    public RobotCore(ConfigurableApplicationContext applicationContext, ListenerMapper listenerMapper) {
         this.applicationContext = applicationContext;
         this.listenerMapper = listenerMapper;
-        this.listenerValueMapper = listenerValueMapper;
     }
 
     @Override
@@ -70,7 +67,6 @@ public class RobotCore implements CommandLineRunner {
         GlobalVariable.sender = GlobalVariable.botManager.getDefaultBot().getSender();
         GlobalVariable.ADMINISTRATOR.add("1097810498");
         loadAll();
-//        applicationContext.getBean(BootClass.class).boot();
     }
 
     public void loadAll() {
@@ -80,7 +76,7 @@ public class RobotCore implements CommandLineRunner {
             SPARE_LISTENER_MAP_BACKUP.putAll(SPARE_LISTENER_MAP);
             SPARE_LISTENER_MAP.clear();
             long start = System.currentTimeMillis();
-            loadConfig(); // 加载本地项目配置文件
+            loadListener();
             AtomicInteger num = new AtomicInteger();
             LISTENER_MAP.values().forEach(i -> num.addAndGet(i.size()));
             LoggerUtil.info("Load config data finish! " + num + " listeners");
@@ -91,13 +87,9 @@ public class RobotCore implements CommandLineRunner {
             }
             loadCount++;
         } catch (Exception e) {
-            if (e instanceof FileNotFoundException) {
-                LoggerUtil.err("Not found bot config!");
-                return;
-            }
             e.printStackTrace();
             if (loadCount > 1) {
-                LISTENER_MAP.putAll(LISTENER_MAP_BACKUP); // 如果报错恢复备份配置
+                LISTENER_MAP.putAll(LISTENER_MAP_BACKUP);
                 SenderUtil.sendPrivateMsg(GlobalVariable.ADMINISTRATOR.get(0), "Load config error: " + e.getMessage());
                 return;
             }
@@ -106,41 +98,22 @@ public class RobotCore implements CommandLineRunner {
         }
     }
 
-    public void loadConfig() throws ClassNotFoundException, InstantiationException, IllegalAccessException {
-        LoggerUtil.info("Start load config data ...");
-        QueryWrapper<ListenerEntity> wrapper = new QueryWrapper<>();
-        loadListener(listenerMapper.selectList(wrapper));
-    }
-
-
     /**
      * 验证监听器,将数据库里的监听器转为{@link Listener}Listener实例
      *
      * @param listeners 数据库里监听器对象
      */
     private void verifyListener(List<ListenerEntity> listeners) throws IllegalAccessException, ClassNotFoundException, InstantiationException {
-        List<Listener> list = new ArrayList<>();
-        for (ListenerEntity info : listeners) {
-            Object o = ClassUtil.getInstance(GlobalVariable.LISTENER, info.getClassName());
-            Class<?> cls = ClassUtil.getClass(GlobalVariable.LISTENER, info.getClassName());
+        for (ListenerEntity lis : listeners) {
+            Object o = ClassUtil.getInstance(StringVariable.LISTENER, lis.getClassName());
+            Class<?> cls = ClassUtil.getClass(StringVariable.LISTENER, lis.getClassName());
             injectionField(o, cls);
-            String name = info.getName();
-            String methodName = info.getMethodName();
+            String methodName = lis.getMethodName();
             Method method = ClassUtil.getMethod(cls, methodName);
-            Listener listener = Listener.builder()
-                    .id(info.getId())
-                    .instance(o)
-                    .method(method)
-                    .name(name)
-                    .priority(info.getPriority())
-                    .breakListeners(info.getBreakListeners())
-                    .atBot(info.getAtBot())
-                    .atAny(info.getAtAny())
-                    .isBoot(info.getIsBoot())
-                    .build();
-            for (String type : info.getType()) {
+            Listener listener = lis.getListener(o, method);
+            for (String type : lis.getType()) {
                 Class<? extends MsgGet> msgGet = getMsgGet(type);
-                if (info.getIsSpare()) {
+                if (lis.getIsSpare()) {
                     if (SPARE_LISTENER_MAP.get(msgGet) != null) {
                         throw new ObjectCountBeyondException("类型" + msgGet.getSimpleName() + "备用监听器数量过多");
                     }
@@ -150,88 +123,37 @@ public class RobotCore implements CommandLineRunner {
                     LISTENER_MAP.get(msgGet).add(listener);
                     LoggerUtil.info("Load listener: " + msgGet.getSimpleName() + "->" + listener.getClass().getSimpleName() + ":" + listener.getName() + " success");
                 }
+                LISTENER_ID_LIST.put(listener.getId(), listener);
             }
         }
     }
 
-    private void loadListener(List<ListenerEntity> listeners) throws ClassNotFoundException, InstantiationException, IllegalAccessException {
-
+    private void loadListener() throws ClassNotFoundException, InstantiationException, IllegalAccessException {
+        QueryWrapper<ListenerEntity> wrapper = new QueryWrapper<>();
+        List<ListenerEntity> listeners = listenerMapper.selectList(wrapper);
         verifyListener(listeners);
         // 遍历每个监听方法,获取到所有阻断监听
-        Map<Class<? extends MsgGet>, List<Integer>> breakListenerIds = new HashMap<>();
+        Map<Class<? extends MsgGet>, List<Integer>> listenerIds = new HashMap<>(16);
         for (Class<? extends MsgGet> msgGet : LISTENER_MAP.keySet()) {
             for (Listener listener : LISTENER_MAP.get(msgGet)) {
-                breakListenerIds.putIfAbsent(msgGet, new ArrayList<>());
-                breakListenerIds.get(msgGet).addAll(Arrays.asList(listener.getBreakListeners()));
-            }
-        }
-        breakListenerIds.forEach((msgGet, ids) -> {
-            ids.removeIf(id -> getListenerById(id) != null || id == -1);
-            if (ids.size() > 0) {
-                throw new RuntimeException("未找到被阻断的监听器" + ids);
-            }
-        });
-        if (breakListenerIds.size() > 0) {
-            Map<Class<? extends MsgGet>, List<Listener>> breakListeners = new HashMap<>();
-            LISTENER_MAP.forEach((msgGet, listenerList) -> listenerList.forEach(listener -> breakListenerIds.get(msgGet).forEach(breakListenerId -> {
-                if (breakListenerId.equals(listener.getId())) {
-                    breakListeners.putIfAbsent(msgGet, new ArrayList<>());
-                    breakListeners.get(msgGet).add(listener);
+                listenerIds.putIfAbsent(msgGet, new ArrayList<>());
+                if (listenerIds.get(msgGet).contains(listener.getId())) {
+                    throw new MethodAlreadyExistException("监听方法" + listener.getClass().getSimpleName() + ":" + listener.getMethod().getName() + "已经被注册");
                 }
-            })));
-            LISTENER_MAP.forEach((msgGet, listenerList) -> listenerList.forEach(listener -> {
-                if (breakListeners.get(msgGet) != null) {
-                    breakListeners.get(msgGet).forEach(breakListener -> {
-                        for (Integer id : listener.getBreakListeners()) {
-                            if (id.equals(breakListener.getId())) {
-                                if (breakListener.getPriority() >= listener.getPriority()) {
-                                    throw new RuntimeException("阻断方法" + breakListener.getName() + "优先级低于被阻断方法" + listener.getName());
-                                }
-                            }
+                listenerIds.get(msgGet).add(listener.getId());
+                for (Integer id : listener.getBreakListeners()) {
+                    if (id != -1) {
+                        if (LISTENER_ID_LIST.get(id) == null) {
+                            throw new ObjectNotFoundException("未找到被阻断的监听器" + id);
                         }
-                    });
-                }
-            }));
-        }
-
-    }
-
-    private Listener getListenerById(int id) {
-        for (List<Listener> listeners : LISTENER_MAP.values()) {
-            for (Listener listener : listeners) {
-                if (listener.getId() == id) {
-                    return listener;
-                }
-            }
-        }
-        return null;
-    }
-
-    private Listener getListenerByMsgGetAndId(Class<? extends MsgGet> msgGet, int id) {
-        for (Listener listener : LISTENER_MAP.get(msgGet)) {
-            if (listener.getId() == id) {
-                return listener;
-            }
-        }
-        return null;
-    }
-
-    private Listener[] getListenersByMsgGetAndIds(Class<? extends MsgGet> msgGet, Integer... ids) {
-        Listener[] listeners = null;
-        for (Listener listener : LISTENER_MAP.get(msgGet)) {
-            for (int id : ids) {
-                if (listener.getId() == id) {
-                    if (listeners == null) {
-                        listeners = new Listener[]{listener};
-                    } else {
-                        listeners = Arrays.copyOf(listeners, listeners.length + 1);
+                        if (LISTENER_ID_LIST.get(id).getPriority() >= listener.getPriority()) {
+                            throw new PriorityIllegalException("阻断方法" + LISTENER_ID_LIST.get(id).getName() + "优先级低于被阻断方法" + listener.getName());
+                        }
                     }
                 }
             }
         }
-        return listeners;
     }
-
 
     @SuppressWarnings("unchecked")
     private Class<? extends MsgGet> getMsgGet(Object type) throws ObjectNotPresentException {
@@ -241,7 +163,6 @@ public class RobotCore implements CommandLineRunner {
             throw new ObjectNotPresentException(type.toString(), new RuntimeException("监听消息类型配置不正确"));
         }
     }
-
 
     @Listens({
             @Listen(GroupMsg.class), // 群聊消息
@@ -262,8 +183,9 @@ public class RobotCore implements CommandLineRunner {
             @Listen(FriendAvatarChanged.class), // 监听好友头像变动事件
 
     })
+    @SuppressWarnings("unused")
     public void listener(MsgGet msg, ListenerContext context, AtDetection atDetection, Bot bot) {
-        if (msg instanceof PrivateMsg && Objects.equals(msg.getText(), "载入配置")) {
+        if (msg instanceof PrivateMsg && Objects.equals(msg.getText(), StringVariable.LOAD_CONFIG)) {
             loadAll();
             return;
         }
@@ -284,7 +206,7 @@ public class RobotCore implements CommandLineRunner {
             }
         }
 
-        if (count == 0) { // 判断是否执行备用方法
+        if (count == 0) {
             try {
                 for (ListenType type : ListenType.values()) {
                     Class<?> cls = ClassUtil.getClass(type.packageName + type);
@@ -355,15 +277,14 @@ public class RobotCore implements CommandLineRunner {
         Object[] args = new Object[paramTypes.length];
         for (int i = 0; i < paramTypes.length; i++) {
             Parameter parameter = paramTypes[i];
-            if (parameter.getType() == String.class && parameter.getAnnotation(DefaultValue.class) != null) {
+            if (parameter.getType() == String[].class && parameter.getAnnotation(DefaultValue.class) != null) {
                 String value = parameter.getAnnotation(DefaultValue.class).value();
-                args[i] = listenerValueMapper.getDefaultValue(id, value);
-                System.out.println(value);
+                args[i] = MessageUtil.getDefaultValue(id, value);
                 continue;
             }
             for (ListenType type : ListenType.values()) {
                 Class<?> cls = ClassUtil.getClass(type.packageName + type);
-                if (cls == parameter.getType()) {
+                if (cls == parameter.getType() && cls.isInstance(msg)) {
                     args[i] = msg;
                 }
             }
@@ -391,46 +312,59 @@ public class RobotCore implements CommandLineRunner {
             if ("result".equals(parameter.getName())) {
                 args[i] = result;
             }
-            if (parameter.getType() == String.class) {
-                if ("qq".equals(parameter.getName()) || "fromQQ".equals(parameter.getName()) || "qqCode".equals(parameter.getName())) {
+            injectionString(msg, parameter, args, i);
+        }
+        return method.invoke(instance, args);
+    }
+
+    private void injectionString(MsgGet msg, Parameter parameter, Object[] args, int i) {
+        if (parameter.getType() == String.class) {
+            for (String str : StringVariable.QQ_CODE_PARAMETER) {
+                if (str.equals(parameter.getName())) {
                     args[i] = msg.getAccountInfo().getAccountCode();
                 }
-                if ("botCode".equals(parameter.getName()) || "bot".equals(parameter.getName()) || "thisCode".equals(parameter.getName())) {
+            }
+            for (String str : StringVariable.BOT_CODE_PARAMETER) {
+                if (str.equals(parameter.getName())) {
                     args[i] = msg.getBotInfo().getAccountCode();
                 }
             }
-            if (msg instanceof GroupMsg) {
-                if (parameter.getType() == Set.class) {
-                    args[i] = Cat.getAts((GroupMsg) msg);
-                }
-                if (parameter.getType() == List.class) {
-                    args[i] = ((GroupMsg) msg).getMsgContent().getCats("at");
-                }
-                if (parameter.getType() == String.class) {
-                    if ("group".equals(parameter.getName()) || "fromGroup".equals(parameter.getName()) || "groupCode".equals(parameter.getName())) {
+        }
+        if (msg instanceof GroupMsg) {
+            if (parameter.getType() == Set.class) {
+                args[i] = Cat.getAts((GroupMsg) msg);
+            }
+            if (parameter.getType() == List.class) {
+                args[i] = ((GroupMsg) msg).getMsgContent().getCats(StringVariable.AT);
+            }
+            if (parameter.getType() == String.class) {
+                for (String str : StringVariable.GROUP_CODE_PARAMETER) {
+                    if (str.equals(parameter.getName())) {
                         args[i] = ((GroupMsg) msg).getGroupInfo().getGroupCode();
                     }
-                    if ("message".equals(parameter.getName()) || "msg".equals(parameter.getName())) {
+                }
+                for (String str : StringVariable.MESSAGE_PARAMETER) {
+                    if (str.equals(parameter.getName())) {
                         args[i] = ((GroupMsg) msg).getMsg();
                     }
                 }
-                if (parameter.getType() == MessageContent.class) {
-                    args[i] = ((GroupMsg) msg).getMsgContent();
-                }
             }
-            if (msg instanceof PrivateMsg) {
-                if (parameter.getType() == String.class) {
-                    if ("message".equals(parameter.getName()) || "msg".equals(parameter.getName())) {
+            if (parameter.getType() == MessageContent.class) {
+                args[i] = ((GroupMsg) msg).getMsgContent();
+            }
+        }
+        if (msg instanceof PrivateMsg) {
+            if (parameter.getType() == String.class) {
+                for (String str : StringVariable.MESSAGE_PARAMETER) {
+                    if (str.equals(parameter.getName())) {
                         args[i] = ((PrivateMsg) msg).getMsg();
                     }
                 }
-                if (parameter.getType() == MessageContent.class) {
-                    args[i] = ((PrivateMsg) msg).getMsgContent();
-                }
             }
-
+            if (parameter.getType() == MessageContent.class) {
+                args[i] = ((PrivateMsg) msg).getMsgContent();
+            }
         }
-        return method.invoke(instance, args);
     }
 
     private void injectionField(Object o, Class<?> cls) throws IllegalAccessException {

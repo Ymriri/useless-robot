@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
  *
  * @author wuyou
  */
+@SuppressWarnings("unused")
 public class LoggerUtil {
     public static void info(String msg) {
         StackTraceElement stackTrace = new Exception().getStackTrace()[1];

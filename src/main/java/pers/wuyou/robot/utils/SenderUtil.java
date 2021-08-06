@@ -15,17 +15,8 @@ import static pers.wuyou.robot.common.GlobalVariable.sender;
  * @author admin
  */
 @Component
+@SuppressWarnings("unused")
 public class SenderUtil {
-//    private static BotManager botManager;
-//
-//    @Autowired
-//    public void setBotManager(BotManager manager) {
-//        setManager(manager);
-//    }
-//
-//    public static void setManager(final BotManager manager) {
-//        botManager = manager;
-//    }
 
     /**
      * 发送群消息
@@ -54,13 +45,6 @@ public class SenderUtil {
      * @param msg   消息内容
      */
     public static synchronized void sendGroupMsg(String group, String msg) {
-//        if (Cat.CONTEXT.get(group) == null) {
-//            Cat.CONTEXT.put(group, new String[]{"", "", "", "", msg});
-//            sender.SENDER.sendGroupMsg(group, msg);
-//            return;
-//        }
-//        String[] ret = getList(group);
-//        Cat.CONTEXT.put(group, new String[]{ret[1], ret[2], ret[3], ret[4], msg});
         sender.SENDER.sendGroupMsg(group, msg);
     }
 
@@ -127,14 +111,4 @@ public class SenderUtil {
             SenderUtil.sendPrivateMsg(GlobalVariable.ADMINISTRATOR.get(0), "尝试给[" + qq + "]发送消息: " + msg + " 失败");
         }
     }
-
-//    /**
-//     * 获取上下文
-//     *
-//     * @param fromGroup 群号
-//     */
-//    public static String[] getList(String fromGroup) {
-//        return Cat.CONTEXT.get(fromGroup);
-//    }
-
 }
