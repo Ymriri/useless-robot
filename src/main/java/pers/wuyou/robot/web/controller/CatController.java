@@ -1,11 +1,11 @@
 package pers.wuyou.robot.web.controller;
 
-import pers.wuyou.robot.common.Cat;
-import pers.wuyou.robot.web.common.RestResponse;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import pers.wuyou.robot.common.Cat;
+import pers.wuyou.robot.web.common.RestResponse;
 
 import java.util.HashMap;
 import java.util.List;
@@ -15,7 +15,7 @@ import java.util.Map;
  * @author wuyou
  */
 @RestController
-@RequestMapping("robot/cat")
+@RequestMapping("uselessRobot/cat")
 public class CatController {
 
     @GetMapping("getAts")

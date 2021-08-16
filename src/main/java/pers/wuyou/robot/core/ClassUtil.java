@@ -18,6 +18,8 @@ public class ClassUtil {
     protected static final Map<String, Class<?>> LISTENER_CLASS_MAP = new HashMap<>();
     protected static final Map<String, Class<?>> OTHER_CLASS_MAP = new HashMap<>();
     protected static String[] listenerPackages;
+    private ClassUtil() {
+    }
 
     public static Method getMethod(Class<?> cls, String methodName) {
 
@@ -67,14 +69,15 @@ public class ClassUtil {
                 String classPath = listenerPackage + "." + clazz;
                 if (LISTENER_CLASS_MAP.get(classPath) == null) {
                     Class<?> cls = Class.forName(classPath);
-                    LISTENER_CLASS_MAP.put(classPath, cls);
+                    return LISTENER_CLASS_MAP.computeIfAbsent(classPath, k -> cls);
+                } else {
+                    return LISTENER_CLASS_MAP.get(classPath);
                 }
-                return LISTENER_CLASS_MAP.get(classPath);
             }
         }
         if (OTHER_CLASS_MAP.get(clazz) == null) {
             Class<?> cls = Class.forName(clazz);
-            OTHER_CLASS_MAP.put(clazz, cls);
+            return OTHER_CLASS_MAP.computeIfAbsent(clazz, k -> cls);
         }
         return OTHER_CLASS_MAP.get(clazz);
     }

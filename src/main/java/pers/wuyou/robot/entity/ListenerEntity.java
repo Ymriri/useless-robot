@@ -10,6 +10,7 @@ import pers.wuyou.robot.core.MessageUtil;
 
 import java.io.Serializable;
 import java.lang.reflect.Method;
+import java.util.Date;
 
 /**
  * <p>
@@ -109,6 +110,11 @@ public class ListenerEntity implements Serializable {
      */
     private String breakListeners;
 
+    /**
+     * 更新时间,自动更新
+     */
+    private Date updateTime;
+
     public String[] getType() {
         return type.split(",");
     }
@@ -121,8 +127,8 @@ public class ListenerEntity implements Serializable {
         }
         return integers;
     }
-    
-    public Listener getListener(Object o, Method method){
+
+    public Listener getListener(Object o, Method method) {
         return Listener.builder()
                 .id(id)
                 .instance(o)
@@ -138,7 +144,8 @@ public class ListenerEntity implements Serializable {
                 .codes(codes)
                 .groups(groups)
                 .isSpare(isSpare)
-                .filterName(MessageUtil.getDefaultValue(id, filterName))
+                .filterName(MessageUtil.getDefaultValue(filterName))
+                .updateTime(updateTime)
                 .build();
     }
 

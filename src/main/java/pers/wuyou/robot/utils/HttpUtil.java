@@ -1,8 +1,6 @@
 package pers.wuyou.robot.utils;
 
 import com.alibaba.fastjson.JSONObject;
-import pers.wuyou.robot.common.GlobalVariable;
-import pers.wuyou.robot.entity.RequestEntity;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.CookieStore;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
@@ -16,6 +14,8 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.util.EntityUtils;
+import pers.wuyou.robot.common.GlobalVariable;
+import pers.wuyou.robot.entity.RequestEntity;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;

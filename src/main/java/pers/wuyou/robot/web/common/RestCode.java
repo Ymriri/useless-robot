@@ -10,7 +10,8 @@ public enum RestCode {
      */
     OK(0, "ok"),
     @SuppressWarnings("unused")
-    ERROR(1, "未知异常"),
+    GROUP_CODE_IS_EMPTY(1, "群号为空"),
+    KEY_ILLEGAL(2, "key已过期"),
     ;
     public final int code;
     public final String msg;

@@ -1,7 +1,7 @@
 package pers.wuyou.robot.service;
 
-import pers.wuyou.robot.entity.BootStateInfo;
 import com.baomidou.mybatisplus.extension.service.IService;
+import pers.wuyou.robot.entity.BootStateInfo;
 
 /**
  * <p>

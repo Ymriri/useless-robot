@@ -10,6 +10,7 @@ import pers.wuyou.robot.common.Cat;
 import pers.wuyou.robot.common.GlobalVariable;
 
 import java.lang.reflect.Method;
+import java.util.Date;
 
 /**
  * 监听器
@@ -93,6 +94,10 @@ public class Listener {
      * 被阻断的监听器数组
      */
     private Integer[] breakListeners;
+    /**
+     * 更新时间,自动更新
+     */
+    private Date updateTime;
 
     @SuppressWarnings("RedundantIfStatement")
     public boolean validation(MsgGet msg) {
@@ -101,11 +106,11 @@ public class Listener {
             message = ((GroupMsg) msg).getMsg();
             String groupCode = ((GroupMsg) msg).getGroupInfo().getGroupCode();
             if (isBoot) {
-                if (GlobalVariable.BOOT_MAP.get(groupCode) == null) {
-                    GlobalVariable.BOOT_MAP.put(groupCode, false);
+                if (GlobalVariable.getBOOT_MAP().get(groupCode) == null) {
+                    GlobalVariable.getBOOT_MAP().put(groupCode, false);
                     return false;
                 } else {
-                    if (!GlobalVariable.BOOT_MAP.get(groupCode)) {
+                    if (GlobalVariable.getBOOT_MAP().getOrDefault(groupCode, false).equals(Boolean.FALSE)) {
                         return false;
                     }
                 }
@@ -123,7 +128,7 @@ public class Listener {
         if (filterName.length != 0) {
             boolean filter = false;
             for (String str : filterName) {
-                if (MessageUtil.verifyMessage(message, str, trim)) {
+                if (MessageUtil.verifyMessage(msg, message, str, trim)) {
                     filter = true;
                 }
             }

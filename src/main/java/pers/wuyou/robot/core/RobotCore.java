@@ -1,16 +1,12 @@
 package pers.wuyou.robot.core;
 
+import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import love.forte.simbot.annotation.Listen;
-import love.forte.simbot.annotation.Listens;
 import love.forte.simbot.api.message.MessageContent;
 import love.forte.simbot.api.message.events.*;
-import love.forte.simbot.api.sender.Getter;
-import love.forte.simbot.api.sender.MsgSender;
-import love.forte.simbot.api.sender.Sender;
-import love.forte.simbot.api.sender.Setter;
+import love.forte.simbot.api.sender.*;
 import love.forte.simbot.bot.Bot;
-import love.forte.simbot.bot.BotManager;
 import love.forte.simbot.filter.AtDetection;
 import love.forte.simbot.listener.ListenerContext;
 import org.springframework.beans.BeansException;
@@ -37,22 +33,21 @@ import java.lang.reflect.Parameter;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static pers.wuyou.robot.common.GlobalVariable.sender;
-
 /**
  * @author wuyou
  */
 @Configuration
 public class RobotCore implements CommandLineRunner {
     public static final Map<Integer, Listener> LISTENER_ID_LIST = new HashMap<>();
+    public static final Map<Integer, Listener> LISTENER_ID_LIST_BACKUP = new HashMap<>();
     public static final Map<Class<? extends MsgGet>, Listener> SPARE_LISTENER_MAP = new HashMap<>();
     public static final Map<Class<? extends MsgGet>, Listener> SPARE_LISTENER_MAP_BACKUP = new HashMap<>();
     public static final Map<Class<? extends MsgGet>, List<Listener>> LISTENER_MAP = new HashMap<>();
     public static final Map<Class<? extends MsgGet>, List<Listener>> LISTENER_MAP_BACKUP = new HashMap<>();
     private final ListenerMapper listenerMapper;
     private final ConfigurableApplicationContext applicationContext;
+    private final BotSender sender = GlobalVariable.getSender();
     private int loadCount = 1;
-
 
     @Autowired
     public RobotCore(ConfigurableApplicationContext applicationContext, ListenerMapper listenerMapper) {
@@ -62,26 +57,26 @@ public class RobotCore implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        GlobalVariable.applicationContext = applicationContext;
-        GlobalVariable.botManager = applicationContext.getBean(BotManager.class);
-        GlobalVariable.sender = GlobalVariable.botManager.getDefaultBot().getSender();
-        GlobalVariable.ADMINISTRATOR.add("1097810498");
+        GlobalVariable.setApplicationContext(applicationContext);
+        GlobalVariable.getADMINISTRATOR().add("1097810498");
         loadAll();
     }
 
     public void loadAll() {
         try {
             LISTENER_MAP_BACKUP.putAll(LISTENER_MAP);
-            LISTENER_MAP.clear();
+//            LISTENER_MAP.clear();
             SPARE_LISTENER_MAP_BACKUP.putAll(SPARE_LISTENER_MAP);
             SPARE_LISTENER_MAP.clear();
+            LISTENER_ID_LIST_BACKUP.putAll(LISTENER_ID_LIST);
+//            LISTENER_ID_LIST.clear();
             long start = System.currentTimeMillis();
             loadListener();
             AtomicInteger num = new AtomicInteger();
             LISTENER_MAP.values().forEach(i -> num.addAndGet(i.size()));
             LoggerUtil.info("Load config data finish! " + num + " listeners");
             if (loadCount > 1) {
-                SenderUtil.sendPrivateMsg(GlobalVariable.ADMINISTRATOR.get(0),
+                SenderUtil.sendPrivateMsg(GlobalVariable.getADMINISTRATOR().get(0),
                         "Load config data finish! " + num + " listeners, " +
                                 "total time: " + (System.currentTimeMillis() - start) + "ms");
             }
@@ -90,10 +85,10 @@ public class RobotCore implements CommandLineRunner {
             e.printStackTrace();
             if (loadCount > 1) {
                 LISTENER_MAP.putAll(LISTENER_MAP_BACKUP);
-                SenderUtil.sendPrivateMsg(GlobalVariable.ADMINISTRATOR.get(0), "Load config error: " + e.getMessage());
+                SenderUtil.sendPrivateMsg(GlobalVariable.getADMINISTRATOR().get(0), "Load config error: " + e.getMessage());
                 return;
             }
-            int exitCode = SpringApplication.exit(GlobalVariable.applicationContext, () -> 0);
+            int exitCode = SpringApplication.exit(GlobalVariable.getApplicationContext(), () -> 0);
             System.exit(exitCode);
         }
     }
@@ -104,13 +99,20 @@ public class RobotCore implements CommandLineRunner {
      * @param listeners 数据库里监听器对象
      */
     private void verifyListener(List<ListenerEntity> listeners) throws IllegalAccessException, ClassNotFoundException, InstantiationException {
+        Map<Class<? extends MsgGet>, List<Listener>> newListenerMap = new HashMap<>(32);
         for (ListenerEntity lis : listeners) {
-            Object o = ClassUtil.getInstance(StringVariable.LISTENER, lis.getClassName());
-            Class<?> cls = ClassUtil.getClass(StringVariable.LISTENER, lis.getClassName());
-            injectionField(o, cls);
-            String methodName = lis.getMethodName();
-            Method method = ClassUtil.getMethod(cls, methodName);
-            Listener listener = lis.getListener(o, method);
+            Listener listener;
+            if (LISTENER_ID_LIST_BACKUP.get(lis.getId()) != null && lis.getUpdateTime() == LISTENER_ID_LIST_BACKUP.get(lis.getId()).getUpdateTime()) {
+                //数据库里没有改变
+                listener = LISTENER_ID_LIST_BACKUP.get(lis.getId());
+            } else {
+                Object o = ClassUtil.getInstance(StringVariable.LISTENER, lis.getClassName());
+                Class<?> cls = ClassUtil.getClass(StringVariable.LISTENER, lis.getClassName());
+                injectionField(o, cls);
+                String methodName = lis.getMethodName();
+                Method method = ClassUtil.getMethod(cls, methodName);
+                listener = lis.getListener(o, method);
+            }
             for (String type : lis.getType()) {
                 Class<? extends MsgGet> msgGet = getMsgGet(type);
                 if (lis.getIsSpare()) {
@@ -119,13 +121,15 @@ public class RobotCore implements CommandLineRunner {
                     }
                     SPARE_LISTENER_MAP.put(msgGet, listener);
                 } else {
-                    LISTENER_MAP.computeIfAbsent(msgGet, k -> new ArrayList<>());
-                    LISTENER_MAP.get(msgGet).add(listener);
+                    newListenerMap.computeIfAbsent(msgGet, k -> new ArrayList<>());
+                    newListenerMap.get(msgGet).add(listener);
                     LoggerUtil.info("Load listener: " + msgGet.getSimpleName() + "->" + listener.getClass().getSimpleName() + ":" + listener.getName() + " success");
                 }
                 LISTENER_ID_LIST.put(listener.getId(), listener);
             }
         }
+        LISTENER_MAP.clear();
+        LISTENER_MAP.putAll(newListenerMap);
     }
 
     private void loadListener() throws ClassNotFoundException, InstantiationException, IllegalAccessException {
@@ -164,25 +168,22 @@ public class RobotCore implements CommandLineRunner {
         }
     }
 
-    @Listens({
-            @Listen(GroupMsg.class), // 群聊消息
-            @Listen(PrivateMsg.class), // 私聊消息
-            @Listen(FriendIncrease.class), // 监听好友增加事件
-            @Listen(GroupMemberIncrease.class), // 监听群友增加事件
-            @Listen(GroupMemberReduce.class), // 监听群友减少事件
-            @Listen(FriendReduce.class), // 监听好友减少事件
-            @Listen(FriendAddRequest.class), // 监听好友请求事件
-            @Listen(GroupAddRequest.class), // 监听群添加请求事件
-            @Listen(PrivateMsgRecall.class), // 私聊消息撤回事件
-            @Listen(GroupMsgRecall.class), // 监听群聊消息撤回事件
-            @Listen(GroupMemberPermissionChanged.class), // 监听群成员权限变动事件
-            @Listen(GroupNameChanged.class), // 监听群名称变动事件
-            @Listen(GroupMemberRemarkChanged.class), // 监听群友群名片变动事件
-            @Listen(GroupMemberSpecialChanged.class), // 监听群友头衔变动事件
-            @Listen(FriendNicknameChanged.class), // 监听好友昵称变动事件
-            @Listen(FriendAvatarChanged.class), // 监听好友头像变动事件
-
-    })
+    @Listen(GroupMsg.class) // 群聊消息
+    @Listen(PrivateMsg.class) // 私聊消息
+    @Listen(FriendIncrease.class) // 监听好友增加事件
+    @Listen(GroupMemberIncrease.class) // 监听群友增加事件
+    @Listen(GroupMemberReduce.class) // 监听群友减少事件
+    @Listen(FriendReduce.class) // 监听好友减少事件
+    @Listen(FriendAddRequest.class) // 监听好友请求事件
+    @Listen(GroupAddRequest.class) // 监听群添加请求事件
+    @Listen(PrivateMsgRecall.class) // 私聊消息撤回事件
+    @Listen(GroupMsgRecall.class) // 监听群聊消息撤回事件
+    @Listen(GroupMemberPermissionChanged.class) // 监听群成员权限变动事件
+    @Listen(GroupNameChanged.class) // 监听群名称变动事件
+    @Listen(GroupMemberRemarkChanged.class) // 监听群友群名片变动事件
+    @Listen(GroupMemberSpecialChanged.class) // 监听群友头衔变动事件
+    @Listen(FriendNicknameChanged.class) // 监听好友昵称变动事件
+    @Listen(FriendAvatarChanged.class) // 监听好友头像变动事件
     @SuppressWarnings("unused")
     public void listener(MsgGet msg, ListenerContext context, AtDetection atDetection, Bot bot) {
         if (msg instanceof PrivateMsg && Objects.equals(msg.getText(), StringVariable.LOAD_CONFIG)) {
@@ -232,7 +233,7 @@ public class RobotCore implements CommandLineRunner {
         try {
             Object result;
             if (listener.validation(msg)) {
-                result = invoke(listener.getId(), listener.getMethod(), listener.getInstance(), msg, context, map.get(listener.getId()), atDetection, bot);
+                result = invoke(listener.getMethod(), listener.getInstance(), msg, context, map.get(listener.getId()), atDetection, bot);
                 // 给该方法的所有阻断方法赋值,不能赋值为"null"
                 if (result != null) {
                     for (Integer breakListener : listener.getBreakListeners()) {
@@ -269,17 +270,17 @@ public class RobotCore implements CommandLineRunner {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        throw new RuntimeException();
+        return new ArrayList<>();
     }
 
-    private Object invoke(Integer id, Method method, Object instance, MsgGet msg, ListenerContext context, Object result, AtDetection atDetection, Bot bot) throws Exception {
+    private Object invoke(Method method, Object instance, MsgGet msg, ListenerContext context, Object result, AtDetection atDetection, Bot bot) throws Exception {
         Parameter[] paramTypes = method.getParameters();
         Object[] args = new Object[paramTypes.length];
         for (int i = 0; i < paramTypes.length; i++) {
             Parameter parameter = paramTypes[i];
             if (parameter.getType() == String[].class && parameter.getAnnotation(DefaultValue.class) != null) {
                 String value = parameter.getAnnotation(DefaultValue.class).value();
-                args[i] = MessageUtil.getDefaultValue(id, value);
+                args[i] = MessageUtil.getDefaultValue(value);
                 continue;
             }
             for (ListenType type : ListenType.values()) {
@@ -367,7 +368,7 @@ public class RobotCore implements CommandLineRunner {
         }
     }
 
-    private void injectionField(Object o, Class<?> cls) throws IllegalAccessException {
+    private void injectionField(Object o, Class<?> cls) {
         for (Field field : cls.getDeclaredFields()) {
             Injection injection = field.getAnnotation(Injection.class);
             InjectionValue injectionValue = field.getAnnotation(InjectionValue.class);
@@ -375,16 +376,15 @@ public class RobotCore implements CommandLineRunner {
 
                 Object bean;
                 try {
-                    bean = GlobalVariable.applicationContext.getBean(field.getType());
-                    field.setAccessible(true);
-                    field.set(o, bean);
-                } catch (BeansException ignored) {
+                    bean = GlobalVariable.getApplicationContext().getBean(field.getType());
+                    BeanUtil.setFieldValue(o, field.getName(), bean);
+                } catch (BeansException e) {
+                    e.printStackTrace();
                 }
             }
             if (injectionValue != null) {
-                String value = GlobalVariable.applicationContext.getEnvironment().getProperty(injectionValue.value());
-                field.setAccessible(true);
-                field.set(o, value);
+                String value = GlobalVariable.getApplicationContext().getEnvironment().getProperty(injectionValue.value());
+                BeanUtil.setFieldValue(o, field.getName(), value);
             }
         }
     }

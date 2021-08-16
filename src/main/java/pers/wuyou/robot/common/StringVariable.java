@@ -14,5 +14,6 @@ public class StringVariable {
     public static final String[] BOT_CODE_PARAMETER = new String[]{"bot", "botCode", "thisCode"};
     public static final String[] MESSAGE_PARAMETER = new String[]{"message", "msg"};
     public static final String AT = "at";
+    public static final String NAME = "name";
     public static final String LOAD_CONFIG = "载入配置";
 }

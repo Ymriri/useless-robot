@@ -4,14 +4,18 @@ import catcode.CatCodeUtil;
 import catcode.CodeTemplate;
 import catcode.MutableNeko;
 import catcode.Neko;
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import pers.wuyou.robot.utils.HttpUtil;
 import love.forte.simbot.api.message.events.GroupMsg;
 import love.forte.simbot.api.message.events.MessageGet;
 import love.forte.simbot.api.message.events.MsgGet;
+import love.forte.simbot.api.sender.Getter;
+import love.forte.simbot.bot.BotManager;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import pers.wuyou.robot.utils.HttpUtil;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
@@ -26,9 +30,14 @@ import java.util.stream.Collectors;
 @SuppressWarnings("unused")
 public class Cat {
     public static final CatCodeUtil UTILS = CatCodeUtil.getInstance();
-    final static CodeTemplate<Neko> NEKO_TEMPLATE = UTILS.getNekoTemplate();
+    private static final CodeTemplate<Neko> NEKO_TEMPLATE = UTILS.getNekoTemplate();
+    public static Getter GETTER;
     private static String projectPath;
 
+    @Autowired
+    public Cat(BotManager manager) {
+        Cat.GETTER = manager.getDefaultBot().getSender().GETTER;
+    }
 
     /**
      * 格式化QQ号
@@ -42,7 +51,7 @@ public class Cat {
             return qq;
         }
         try {
-            String name = GlobalVariable.sender.GETTER.getMemberInfo(fromGroup, qq).getAccountRemarkOrNickname();
+            String name = GETTER.getMemberInfo(fromGroup, qq).getAccountRemarkOrNickname();
             return "[" + qq + "](" + name + ")";
         } catch (NoSuchElementException e) {
             return "[" + qq + "]";
@@ -51,7 +60,7 @@ public class Cat {
 
     public static String at(String qq, String name) {
         final MutableNeko at = NEKO_TEMPLATE.at(qq).mutable();
-        at.put("name", name);
+        at.put(StringVariable.NAME, name);
         return at + " ";
     }
 
@@ -72,14 +81,14 @@ public class Cat {
      */
     public static boolean atBot(MsgGet msgget) {
         if (msgget instanceof GroupMsg) {
-            return getAts((GroupMsg) msgget).contains(GlobalVariable.botManager.getDefaultBot().getBotInfo().getAccountCode());
+            return getAts((GroupMsg) msgget).contains(GlobalVariable.getBotManager().getDefaultBot().getBotInfo().getAccountCode());
         } else {
             return false;
         }
     }
+
     /**
      * 获取艾特bot的猫猫码
-     *
      */
     public static String atBot() {
         return Cat.at(GlobalVariable.getDefaultBotCode());
@@ -165,10 +174,10 @@ public class Cat {
                 if ("true".equals(neko.get("all"))) {
                     str = str.replace(neko, "@全体成员");
                 } else {
-                    str = str.replace(neko, "@" + GlobalVariable.sender.GETTER.getMemberInfo(fromGroup, Objects.requireNonNull(neko.get("code"))).getAccountRemarkOrNickname() + "\u202D" + (withCode ? neko.get("code") + "\u202C" : ""));
+                    str = str.replace(neko, "@" + GETTER.getMemberInfo(fromGroup, Objects.requireNonNull(neko.get("code"))).getAccountRemarkOrNickname() + "\u202D" + (withCode ? neko.get("code") + "\u202C" : ""));
                 }
             } catch (NoSuchElementException e) {
-                str = str.replace(neko, "@" + GlobalVariable.sender.GETTER.getFriendInfo(Objects.requireNonNull(neko.get("code"))).getAccountRemarkOrNickname() + "\u202D" + (withCode ? neko.get("code") + "\u202C" : ""));
+                str = str.replace(neko, "@" + GETTER.getFriendInfo(Objects.requireNonNull(neko.get("code"))).getAccountRemarkOrNickname() + "\u202D" + (withCode ? neko.get("code") + "\u202C" : ""));
             }
         }
         return str;
@@ -223,24 +232,22 @@ public class Cat {
      * @return 获取到的猫猫码
      */
     public static Neko get163Music(String music) {
-        System.out.println(music);
         String resp = HttpUtil.get("https://music.163.com/api/search/get/web?type=1&s=" + music).getResponse();
-        System.out.println(resp);
-        JSONObject json = JSONObject.parseObject(resp);
+        JSONObject json = JSON.parseObject(resp);
         JSONArray jsonArray = json.getJSONObject("result").getJSONArray("songs");
         JSONObject jsonObject = jsonArray.getJSONObject(0);
         String id = jsonObject.getString("id");
         JSONArray artistsJson = jsonObject.getJSONArray("artists");
         List<String> artistList = artistsJson.stream().map(item -> {
             JSONObject object = (JSONObject) item;
-            return object.getString("name");
+            return object.getString(StringVariable.NAME);
         }).collect(Collectors.toList());
         String artists = String.join("&", artistList);
         String song = "https://music.163.com/song/media/outer/url?id=" + id + ".mp3";
         String detail = "https://api.imjad.cn/cloudmusic/?type=detail&id=" + id;
-        String preview = JSONObject.parseObject(HttpUtil.get(detail).getResponse()).getJSONArray("songs").getJSONObject(0).getJSONObject("al").getString("picUrl");
+        String preview = JSON.parseObject(HttpUtil.get(detail).getResponse()).getJSONArray("songs").getJSONObject(0).getJSONObject("al").getString("picUrl");
         String jumpUrl = "https://music.163.com/#/song?id=" + id;
-        String title = jsonObject.getString("name");
+        String title = jsonObject.getString(StringVariable.NAME);
         return getMusicNeko(title, preview, artists, song, jumpUrl, "163");
     }
 
@@ -252,14 +259,14 @@ public class Cat {
      */
     public static Neko getQqMusic(String music) {
         String resp = HttpUtil.get("https://c.y.qq.com/soso/fcgi-bin/client_search_cp?new_json=1&remoteplace=txt.yqq.song&t=0&aggr=1&cr=1&w=" + music + "&format=json&platform=yqq.json").getResponse();
-        JSONObject json = JSONObject.parseObject(resp);
+        JSONObject json = JSON.parseObject(resp);
         JSONArray jsonArray = json.getJSONObject("data").getJSONObject("song").getJSONArray("list");
         JSONObject jsonObject = jsonArray.getJSONObject(0);
         String mid = jsonObject.getString("mid");
         JSONArray artistsJson = jsonObject.getJSONArray("singer");
         List<String> artistList = artistsJson.stream().map(item -> {
             JSONObject object = (JSONObject) item;
-            return object.getString("name");
+            return object.getString(StringVariable.NAME);
         }).collect(Collectors.toList());
         String artists = String.join("&", artistList);
         String song = null;
@@ -268,10 +275,10 @@ public class Cat {
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
         }
-        String url = "https://dl.stream.qqmusic.qq.com/" + JSONObject.parseObject(HttpUtil.get(song).getResponse()).getJSONObject("req_0").getJSONObject("data").getJSONArray("midurlinfo").getJSONObject(0).getString("purl");
+        String url = "https://dl.stream.qqmusic.qq.com/" + JSON.parseObject(HttpUtil.get(song).getResponse()).getJSONObject("req_0").getJSONObject("data").getJSONArray("midurlinfo").getJSONObject(0).getString("purl");
         String jumpUrl = "https://y.qq.com/n/ryqq/songDetail/" + mid;
         String preview = "https:" + HttpUtil.getJson(HttpUtil.get(jumpUrl).getResponse(), "__INITIAL_DATA__").getJSONObject("detail").getString("picurl");
-        String title = jsonObject.getString("name");
+        String title = jsonObject.getString(StringVariable.NAME);
         return getMusicNeko(title, preview, artists, url, jumpUrl, "qq");
     }
 

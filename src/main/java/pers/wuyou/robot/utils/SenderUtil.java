@@ -1,13 +1,18 @@
 package pers.wuyou.robot.utils;
 
 import catcode.Neko;
-import pers.wuyou.robot.common.GlobalVariable;
 import love.forte.simbot.api.message.MessageContent;
+import love.forte.simbot.api.message.events.GroupMsg;
+import love.forte.simbot.api.message.events.MsgGet;
+import love.forte.simbot.api.message.events.PrivateMsg;
+import love.forte.simbot.api.sender.Sender;
+import love.forte.simbot.bot.BotManager;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import pers.wuyou.robot.common.GlobalVariable;
+import pers.wuyou.robot.config.MessageReplaceConfig;
 
 import java.util.NoSuchElementException;
-
-import static pers.wuyou.robot.common.GlobalVariable.sender;
 
 /**
  * 发送消息的工具类
@@ -17,6 +22,55 @@ import static pers.wuyou.robot.common.GlobalVariable.sender;
 @Component
 @SuppressWarnings("unused")
 public class SenderUtil {
+    public static Sender SENDER;
+
+    @Autowired
+    public SenderUtil(BotManager manager) {
+        SenderUtil.SENDER = manager.getDefaultBot().getSender().SENDER;
+    }
+
+    /**
+     * 发送群消息
+     *
+     * @param type    类型,group或private
+     * @param code    群号或QQ号
+     * @param message 消息内容
+     */
+    public static void sendMsg(MsgGet msgGet, String type, String code, String message) {
+        if (message == null || message.isEmpty()) {
+            return;
+        }
+        if (msgGet != null) {
+            message = MessageReplaceConfig.reconstructMessage(msgGet, message);
+        }
+        try {
+            switch (type) {
+                case "g":
+                case "group":
+                    SENDER.sendGroupMsg(code, message);
+                    break;
+                case "p":
+                case "private":
+                    SENDER.sendPrivateMsg(code, message);
+                    break;
+                default:
+            }
+        } catch (NoSuchElementException e) {
+            SenderUtil.sendPrivateMsg(GlobalVariable.getADMINISTRATOR().get(0), "尝试给" + type + "[" + code + "]发送消息: " + message + " 失败");
+        }
+
+    }
+
+    /**
+     * 发送群消息,并解析
+     *
+     * @param msg     GroupMsg对象
+     * @param group   群号
+     * @param message 消息内容
+     */
+    public static synchronized void sendGroupMsg(GroupMsg msg, String group, String message) {
+        sendMsg(msg, "g", group, message);
+    }
 
     /**
      * 发送群消息
@@ -32,7 +86,7 @@ public class SenderUtil {
      * 发送群消息
      *
      * @param group 群号
-     * @param neko 猫猫码
+     * @param neko  猫猫码
      */
     public static void sendGroupMsg(String group, Neko neko) {
         sendGroupMsg(group, neko.toString());
@@ -41,74 +95,52 @@ public class SenderUtil {
     /**
      * 发送群消息
      *
-     * @param group 群号
-     * @param msg   消息内容
+     * @param group   群号
+     * @param message 消息内容
      */
-    public static synchronized void sendGroupMsg(String group, String msg) {
-        sender.SENDER.sendGroupMsg(group, msg);
+    public static synchronized void sendGroupMsg(String group, String message) {
+        sendMsg(null, "g", group, message);
+    }
+
+    /**
+     * 发送私聊消息,并解析
+     *
+     * @param msg     PrivateMsg对象
+     * @param qq      qq号
+     * @param message 消息内容
+     */
+    public static synchronized void sendPrivateMsg(PrivateMsg msg, String qq, String message) {
+        sendMsg(msg, "p", qq, message);
     }
 
     /**
      * 发送私聊消息
      *
-     * @param qq  QQ号
-     * @param msg 消息内容
+     * @param qq      QQ号
+     * @param message 消息内容
      */
-    public static void sendPrivateMsg(String qq, String msg) {
-        sendPrivateMsg(qq, null, msg);
+    public static void sendPrivateMsg(String qq, MessageContent message) {
+        sendPrivateMsg(qq, message.getMsg());
     }
 
     /**
      * 发送私聊消息
      *
-     * @param qq  QQ号
+     * @param qq   QQ号
      * @param neko 猫猫码
      */
     public static void sendPrivateMsg(String qq, Neko neko) {
         sendPrivateMsg(qq, neko.toString());
     }
-    /**
-     * 发送私聊消息
-     *
-     * @param qq  QQ号
-     * @param msg 消息内容
-     */
-    public static void sendPrivateMsg(String qq, MessageContent msg) {
-        sendPrivateMsg(qq, null, msg);
-    }
 
     /**
      * 发送私聊消息
      *
-     * @param qq    QQ号
-     * @param group 发送消息的群号
-     * @param msg   消息内容
+     * @param qq      QQ号
+     * @param message 消息内容
      */
-    public static void sendPrivateMsg(String qq, String group, MessageContent msg) {
-        try {
-                sender.SENDER.sendPrivateMsg(qq, group, msg);
-        } catch (NoSuchElementException e) {
-            System.out.println(e.getMessage());
-            SenderUtil.sendPrivateMsg(GlobalVariable.ADMINISTRATOR.get(0), "尝试给[" + qq + "]发送消息: " + msg + " 失败");
-        }
+    public static void sendPrivateMsg(String qq, String message) {
+        sendMsg(null, "p", qq, message);
     }
 
-    /**
-     * 发送私聊消息
-     *
-     * @param qq    QQ号
-     * @param group 发送消息的群号
-     * @param msg   消息内容
-     */
-    public static synchronized void sendPrivateMsg(String qq, String group, String msg) {
-        if (msg == null || msg.isEmpty()) {
-            return;
-        }
-        try {
-                sender.SENDER.sendPrivateMsg(qq, group, msg);
-        } catch (NoSuchElementException e) {
-            System.out.println(e.getMessage());
-            SenderUtil.sendPrivateMsg(GlobalVariable.ADMINISTRATOR.get(0), "尝试给[" + qq + "]发送消息: " + msg + " 失败");
-        }
-    }
 }

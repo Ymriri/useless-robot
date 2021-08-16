@@ -1,7 +1,5 @@
 package pers.wuyou.robot.utils;
 
-import pers.wuyou.robot.common.GlobalVariable;
-import pers.wuyou.robot.entity.RequestEntity;
 import org.apache.http.client.CookieStore;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -11,6 +9,8 @@ import org.apache.http.impl.client.BasicCookieStore;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
+import pers.wuyou.robot.common.GlobalVariable;
+import pers.wuyou.robot.entity.RequestEntity;
 
 import java.io.IOException;
 import java.net.URISyntaxException;

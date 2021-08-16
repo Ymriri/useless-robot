@@ -60,6 +60,9 @@ public class QQLogin {
      */
     public static RequestEntity getLoginState(String key) {
         Map<String, String> map = QQLogin.COOKIES_MAP.get(key);
+        if (map == null) {
+            return null;
+        }
         String urlCheckTimeout =
                 "https://ssl.ptlogin2.qq.com/ptqrlogin?u1=https://pay.qq.com/ipay/login-proxy.html&ptqrtoken=" + ptqrtokenStr(map.get("qrsig"))
                         + "&ptredirect=0&h=1&t=1&g=1&from_ui=1&ptlang=2052&action=0-0-" + key

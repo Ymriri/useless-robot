@@ -2,4 +2,18 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="pers.wuyou.robot.mapper.ListenerValuesMapper">
 
+    <select id="selectByDefaultValueId" resultType="pers.wuyou.robot.entity.ListenerValues">
+        select lv.* from listener_values lv left join default_value
+        dv on lv.value_id = dv.id
+        <where>
+            dv.id = #{id}
+        </where>
+    </select>
+
+    <select id="getDefaultValue" resultType="java.lang.String">
+        select lv.value from listener_values lv join default_value dv on dv.id = lv.value_id
+        <where>
+            dv.name = #{name}
+        </where>
+    </select>
 </mapper>

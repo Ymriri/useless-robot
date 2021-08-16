@@ -7,6 +7,7 @@ import java.lang.annotation.Target;
 
 /**
  * 获取数据库中的默认值
+ *
  * @author wuyou
  */
 @Retention(RetentionPolicy.RUNTIME)

@@ -2,4 +2,12 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="pers.wuyou.robot.mapper.DefaultValueMapper">
 
+    <select id="getDefaultValue" resultType="pers.wuyou.robot.web.vo.DefaultValueVO">
+        select dv.*,count(lv.id) as valueCount from default_value dv
+        left join listener_values lv on dv.id = lv.value_id
+        <where>
+            dv.name like "%"#{name}"%"
+        </where>
+        group by dv.id
+    </select>
 </mapper>
