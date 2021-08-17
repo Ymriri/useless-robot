@@ -81,7 +81,7 @@ public class Cat {
      */
     public static boolean atBot(MsgGet msgget) {
         if (msgget instanceof GroupMsg) {
-            return getAts((GroupMsg) msgget).contains(GlobalVariable.getBotManager().getDefaultBot().getBotInfo().getAccountCode());
+            return getAts((GroupMsg) msgget).contains(GlobalVariable.getDefaultBotCode());
         } else {
             return false;
         }

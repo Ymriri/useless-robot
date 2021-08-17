@@ -73,19 +73,19 @@ public class Listener {
     private Boolean isSpare;
 
     /**
-     * 当参数中的人被at时触发,多个用","隔开
+     * 当参数中的人被at时触发
      */
-    private String at;
+    private String[] at;
 
     /**
-     * 匹配这段消息的账号列表,多个用","隔开
+     * 匹配这段消息的账号列表
      */
-    private String codes;
+    private String[] codes;
 
     /**
-     * 匹配当前消息的群列表,多个用","隔开
+     * 匹配当前消息的群列表
      */
-    private String groups;
+    private String[] groups;
     /**
      * 过滤器字段数组
      */
@@ -102,6 +102,7 @@ public class Listener {
     @SuppressWarnings("RedundantIfStatement")
     public boolean validation(MsgGet msg) {
         String message = null;
+        String qq = msg.getAccountInfo().getAccountCode();
         if (msg instanceof GroupMsg) {
             message = ((GroupMsg) msg).getMsg();
             String groupCode = ((GroupMsg) msg).getGroupInfo().getGroupCode();
@@ -121,15 +122,25 @@ public class Listener {
             if (atBot && !Cat.atBot(msg)) {
                 return false;
             }
+            if (unVerifyCodes(groups, groupCode)) {
+                return false;
+            }
+            if (unVerifyCodes(Cat.getAts((GroupMsg) msg).toArray(new String[]{}), groupCode)) {
+                return false;
+            }
         }
         if (msg instanceof PrivateMsg) {
             message = ((PrivateMsg) msg).getMsg();
+        }
+        if (unVerifyCodes(codes, qq)) {
+            return false;
         }
         if (filterName.length != 0) {
             boolean filter = false;
             for (String str : filterName) {
                 if (MessageUtil.verifyMessage(msg, message, str, trim)) {
                     filter = true;
+                    break;
                 }
             }
             if (!filter) {
@@ -139,4 +150,17 @@ public class Listener {
         return true;
     }
 
+    private boolean unVerifyCodes(String[] codes, String code) {
+        if (codes.length != 0) {
+            boolean filter = false;
+            for (String str : codes) {
+                if (code.equals(str)) {
+                    filter = true;
+                    break;
+                }
+            }
+            return !filter;
+        }
+        return false;
+    }
 }
