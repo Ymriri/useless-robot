@@ -16,11 +16,11 @@ public class BootListener {
 
     public void boot(String groupCode, @DefaultValue("boot_tip") String[] bootTip) {
         bootStateInfoService.bootAndShutDown(groupCode, true);
-        SenderUtil.sendGroupMsg(groupCode, bootTip[RandomUtil.getRandom(bootTip.length - 1)]);
+        SenderUtil.sendGroupMsg(groupCode, RandomUtil.getRandomString(bootTip));
     }
 
     public void shutDown(String groupCode, @DefaultValue("shut_down_tip") String[] shutDownTip) {
         bootStateInfoService.bootAndShutDown(groupCode, false);
-        SenderUtil.sendGroupMsg(groupCode, shutDownTip[RandomUtil.getRandom(shutDownTip.length - 1)]);
+        SenderUtil.sendGroupMsg(groupCode, RandomUtil.getRandomString(shutDownTip));
     }
 }

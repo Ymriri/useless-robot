@@ -33,4 +33,20 @@ public class RandomUtil {
         }
         return RANDOM.nextInt(bounds) + 1;
     }
+
+    /**
+     * 随机返回数组中的一条内容
+     *
+     * @param strings 字符串数组
+     * @return 数组中的随机一条字符串
+     */
+    public static String getRandomString(String[] strings) {
+        if (strings.length == 0) {
+            return "";
+        }
+        if (strings.length == 1) {
+            return strings[0];
+        }
+        return strings[RANDOM.nextInt(strings.length - 1) + 1];
+    }
 }
