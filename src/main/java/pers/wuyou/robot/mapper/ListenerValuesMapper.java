@@ -2,6 +2,7 @@ package pers.wuyou.robot.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 import pers.wuyou.robot.entity.ListenerValues;
 
 import java.util.List;
@@ -28,8 +29,9 @@ public interface ListenerValuesMapper extends BaseMapper<ListenerValues> {
      * 获取默认值
      *
      * @param name 字段名
+     * @param group 群号
      * @return 对应监听器的字段值, 如果没有的话返回默认字段值
      */
-    List<String> getDefaultValue(String name);
+    List<String> getDefaultValue(@Param("name") String name, @Param("group") String group);
 
 }

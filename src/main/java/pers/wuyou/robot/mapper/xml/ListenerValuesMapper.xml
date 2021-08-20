@@ -14,6 +14,10 @@
         select lv.value from listener_values lv join default_value dv on dv.id = lv.value_id
         <where>
             dv.name = #{name}
+            <if test="group != '' and group != null">
+                and
+                lv.group_code = #{group}
+            </if>
         </where>
     </select>
 </mapper>

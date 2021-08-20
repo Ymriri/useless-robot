@@ -6,7 +6,6 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import pers.wuyou.robot.core.Listener;
-import pers.wuyou.robot.core.MessageUtil;
 
 import java.io.Serializable;
 import java.lang.reflect.Method;
@@ -140,11 +139,11 @@ public class ListenerEntity implements Serializable {
                 .atBot(atBot)
                 .atAny(atAny)
                 .isBoot(isBoot)
-                .at(at.split(","))
-                .codes(codes.split(","))
-                .groups(groups.split(","))
+                .at(at == null ? new String[0] : at.split(","))
+                .codes(codes == null ? new String[0] : codes.split(","))
+                .groups(groups == null ? new String[0] : groups.split(","))
                 .isSpare(isSpare)
-                .filterName(MessageUtil.getDefaultValue(filterName))
+                .filterName(filterName)
                 .updateTime(updateTime)
                 .build();
     }

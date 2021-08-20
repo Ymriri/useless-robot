@@ -11,6 +11,7 @@ import pers.wuyou.robot.common.GlobalVariable;
 
 import java.lang.reflect.Method;
 import java.util.Date;
+import java.util.Map;
 
 /**
  * 监听器
@@ -89,7 +90,7 @@ public class Listener {
     /**
      * 过滤器字段数组
      */
-    private String[] filterName;
+    private String filterName;
     /**
      * 被阻断的监听器数组
      */
@@ -100,12 +101,15 @@ public class Listener {
     private Date updateTime;
 
     @SuppressWarnings("RedundantIfStatement")
-    public boolean validation(MsgGet msg) {
+    public boolean validation(Map<String, Object> args) {
+        MsgGet msg = (MsgGet) args.get("msgGet");
         String message = null;
         String qq = msg.getAccountInfo().getAccountCode();
+        String[] filterNames = new String[0];
         if (msg instanceof GroupMsg) {
             message = ((GroupMsg) msg).getMsg();
             String groupCode = ((GroupMsg) msg).getGroupInfo().getGroupCode();
+            filterNames = MessageUtil.getDefaultValue(filterName, groupCode);
             if (isBoot) {
                 if (GlobalVariable.getBOOT_MAP().get(groupCode) == null) {
                     GlobalVariable.getBOOT_MAP().put(groupCode, false);
@@ -125,20 +129,21 @@ public class Listener {
             if (unVerifyCodes(groups, groupCode)) {
                 return false;
             }
-            if (unVerifyCodes(Cat.getAts((GroupMsg) msg).toArray(new String[]{}), groupCode)) {
+            if (unVerifyCodes(at, Cat.getAts((GroupMsg) msg).toArray(new String[]{}))) {
                 return false;
             }
         }
         if (msg instanceof PrivateMsg) {
             message = ((PrivateMsg) msg).getMsg();
+            filterNames = MessageUtil.getDefaultValue(filterName);
         }
         if (unVerifyCodes(codes, qq)) {
             return false;
         }
-        if (filterName.length != 0) {
+        if (filterNames.length != 0) {
             boolean filter = false;
-            for (String str : filterName) {
-                if (MessageUtil.verifyMessage(msg, message, str, trim)) {
+            for (String str : filterNames) {
+                if (MessageUtil.verifyMessage(args, message, str, trim)) {
                     filter = true;
                     break;
                 }
@@ -157,6 +162,22 @@ public class Listener {
                 if (code.equals(str)) {
                     filter = true;
                     break;
+                }
+            }
+            return !filter;
+        }
+        return false;
+    }
+
+    private boolean unVerifyCodes(String[] codes, String[] code) {
+        if (codes.length != 0) {
+            boolean filter = false;
+            for (String str : codes) {
+                for (String s : code) {
+                    if (s.equals(str)) {
+                        filter = true;
+                        break;
+                    }
                 }
             }
             return !filter;
