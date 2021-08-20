@@ -46,7 +46,7 @@ public class RobotCore implements CommandLineRunner {
     public static final Map<Class<? extends MsgGet>, List<Listener>> LISTENER_MAP_BACKUP = new HashMap<>();
     private final ListenerMapper listenerMapper;
     private final ConfigurableApplicationContext applicationContext;
-    private final BotSender sender = GlobalVariable.getSender();
+    private BotSender sender = GlobalVariable.getSender();
     private int loadCount = 1;
 
     @Autowired
@@ -59,6 +59,7 @@ public class RobotCore implements CommandLineRunner {
     public void run(String... args) {
         GlobalVariable.setApplicationContext(applicationContext);
         GlobalVariable.getADMINISTRATOR().add("1097810498");
+        this.sender = GlobalVariable.getSender();
         loadAll();
     }
 
@@ -232,8 +233,10 @@ public class RobotCore implements CommandLineRunner {
     private boolean invoke(Listener listener, MsgGet msg, ListenerContext context, Map<Integer, Object> map, AtDetection atDetection, Bot bot) {
         try {
             Object result;
-            if (listener.validation(msg)) {
-                result = invoke(listener.getMethod(), listener.getInstance(), msg, context, map.get(listener.getId()), atDetection, bot);
+            Map<String, Object> args = new HashMap<>();
+            args.put("msgGet", msg);
+            if (listener.validation(args)) {
+                result = invoke(args, listener.getMethod(), listener.getInstance(), msg, context, map.get(listener.getId()), atDetection, bot);
                 // 给该方法的所有阻断方法赋值,不能赋值为"null"
                 if (result != null) {
                     for (Integer breakListener : listener.getBreakListeners()) {
@@ -273,14 +276,26 @@ public class RobotCore implements CommandLineRunner {
         return new ArrayList<>();
     }
 
-    private Object invoke(Method method, Object instance, MsgGet msg, ListenerContext context, Object result, AtDetection atDetection, Bot bot) throws Exception {
+    private Object invoke(Map<String, Object> extra, Method method, Object instance, MsgGet msg, ListenerContext context, Object result, AtDetection atDetection, Bot bot) throws Exception {
         Parameter[] paramTypes = method.getParameters();
         Object[] args = new Object[paramTypes.length];
         for (int i = 0; i < paramTypes.length; i++) {
             Parameter parameter = paramTypes[i];
             if (parameter.getType() == String[].class && parameter.getAnnotation(DefaultValue.class) != null) {
                 String value = parameter.getAnnotation(DefaultValue.class).value();
-                args[i] = MessageUtil.getDefaultValue(value);
+                if (msg instanceof GroupMsg) {
+                    args[i] = MessageUtil.getDefaultValue(value, ((GroupMsg) msg).getGroupInfo().getGroupCode());
+                } else {
+                    args[i] = MessageUtil.getDefaultValue(value);
+                }
+                continue;
+            }
+            if (parameter.getType() == Long.class && parameter.getAnnotation(DefaultValue.class) != null) {
+                String value = parameter.getAnnotation(DefaultValue.class).value();
+                if ("time".equals(value)) {
+                    args[i] = Long.parseLong(extra.get("time").toString());
+                    continue;
+                }
                 continue;
             }
             for (ListenType type : ListenType.values()) {
