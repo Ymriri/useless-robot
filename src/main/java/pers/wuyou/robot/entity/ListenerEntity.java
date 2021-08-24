@@ -133,6 +133,7 @@ public class ListenerEntity implements Serializable {
                 .instance(o)
                 .method(method)
                 .name(name)
+                .introduction(introduction)
                 .priority(priority)
                 .breakListeners(getBreakListeners())
                 .trim(trim)

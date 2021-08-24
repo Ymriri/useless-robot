@@ -3,6 +3,7 @@ package pers.wuyou.robot.core;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import love.forte.simbot.api.message.events.GroupMsg;
 import love.forte.simbot.api.message.events.MsgGet;
 import love.forte.simbot.api.message.events.PrivateMsg;
@@ -21,6 +22,7 @@ import java.util.Map;
 @Data
 @Builder
 @AllArgsConstructor
+@NoArgsConstructor
 public class Listener {
     private Integer id;
     /**
@@ -37,6 +39,11 @@ public class Listener {
      * 监听器的别名,若不配置则为method.getName()
      */
     private String name;
+
+    /**
+     * 监听器简介,在前端展示
+     */
+    private String introduction;
 
     /**
      * 监听类型数组
@@ -109,6 +116,9 @@ public class Listener {
         if (msg instanceof GroupMsg) {
             message = ((GroupMsg) msg).getMsg();
             String groupCode = ((GroupMsg) msg).getGroupInfo().getGroupCode();
+            if(!ListenerUtil.getListenerOpen(groupCode, id)){
+                return false;
+            }
             filterNames = MessageUtil.getDefaultValue(filterName, groupCode);
             if (isBoot) {
                 if (GlobalVariable.getBOOT_MAP().get(groupCode) == null) {
@@ -143,7 +153,7 @@ public class Listener {
         if (filterNames.length != 0) {
             boolean filter = false;
             for (String str : filterNames) {
-                if (MessageUtil.verifyMessage(args, message, str, trim)) {
+                if (ListenerUtil.verifyMessage(args, message, str, trim)) {
                     filter = true;
                     break;
                 }
@@ -184,4 +194,5 @@ public class Listener {
         }
         return false;
     }
+
 }
