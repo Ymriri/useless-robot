@@ -4,9 +4,7 @@
 
 **一个机器人项目, 仅供学习使用**
 
-以前的版本(通过`json`文件实现配置监听器和过滤器)请参考[useless-robot](https://github.com/wuyou-123/simbot-robot-old/) (已停止维护)
-
-以前的以前的版本(通过注解实现listener和filter)请参考[simbot-robot](https://github.com/wuyou-123/simbot-robot/) (已停止维护)
+以前的版本(通过注解实现listener和filter)请参考[simbot-robot](https://github.com/wuyou-123/simbot-robot/) (已停止维护)
 
 **[后台管理项目(vue)](https://github.com/wuyou-123/useless-robot-admin)**
 
