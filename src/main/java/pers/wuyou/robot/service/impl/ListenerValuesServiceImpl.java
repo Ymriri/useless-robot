@@ -7,7 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-import pers.wuyou.robot.common.StringVariable;
+import pers.wuyou.robot.common.StringPool;
 import pers.wuyou.robot.entity.DefaultValue;
 import pers.wuyou.robot.entity.ListenerValues;
 import pers.wuyou.robot.mapper.DefaultValueMapper;
@@ -38,7 +38,7 @@ public class ListenerValuesServiceImpl extends ServiceImpl<ListenerValuesMapper,
     @Override
     public void saveByName(ListenerValuesVO listenerValues) {
         QueryWrapper<DefaultValue> wrapper = new QueryWrapper<>();
-        wrapper.eq(StringVariable.NAME, listenerValues.getName());
+        wrapper.eq(StringPool.NAME, listenerValues.getName());
         DefaultValue defaultValue = defaultValueMapper.selectOne(wrapper);
         listenerValuesMapper.insert(new ListenerValues(defaultValue.getId(), listenerValues.getValue()));
     }

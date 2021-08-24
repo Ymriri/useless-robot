@@ -60,7 +60,7 @@ public class Cat {
 
     public static String at(String qq, String name) {
         final MutableNeko at = NEKO_TEMPLATE.at(qq).mutable();
-        at.put(StringVariable.NAME, name);
+        at.put(StringPool.NAME, name);
         return at + " ";
     }
 
@@ -109,7 +109,7 @@ public class Cat {
      */
     public static String startsWithAt(String msg) {
         List<String> list = UTILS.split(msg);
-        Neko code = UTILS.getNeko(list.get(0), StringVariable.AT);
+        Neko code = UTILS.getNeko(list.get(0), StringPool.AT);
         if (code != null) {
             return code.get("code");
         }
@@ -121,7 +121,19 @@ public class Cat {
      */
     public static Set<String> getAts(MessageGet msg) {
         Set<String> set = new HashSet<>();
-        for (Neko neko : msg.getMsgContent().getCats(StringVariable.AT)) {
+        for (Neko neko : msg.getMsgContent().getCats(StringPool.AT)) {
+            if (neko.get("code") != null) {
+                set.add(neko.get("code"));
+            }
+        }
+        return set;
+    }
+    /**
+     * 获取所有艾特的QQ号
+     */
+    public static Set<String> getAts(String msg) {
+        Set<String> set = new HashSet<>();
+        for (Neko neko : UTILS.getNekoList(msg, StringPool.AT)) {
             if (neko.get("code") != null) {
                 set.add(neko.get("code"));
             }
@@ -133,8 +145,8 @@ public class Cat {
      * 获取所有艾特的QQ号的KQ码
      */
     public static Set<Neko> getAtKqs(String msg) {
-        final List<Neko> list = UTILS.getNekoList(msg, StringVariable.AT);
-        return new HashSet<>(list);
+        final List<Neko> list = UTILS.getNekoList(msg, StringPool.AT);
+        return new LinkedHashSet<>(list);
     }
 
     /**
@@ -240,14 +252,14 @@ public class Cat {
         JSONArray artistsJson = jsonObject.getJSONArray("artists");
         List<String> artistList = artistsJson.stream().map(item -> {
             JSONObject object = (JSONObject) item;
-            return object.getString(StringVariable.NAME);
+            return object.getString(StringPool.NAME);
         }).collect(Collectors.toList());
         String artists = String.join("&", artistList);
         String song = "https://music.163.com/song/media/outer/url?id=" + id + ".mp3";
         String detail = "https://api.imjad.cn/cloudmusic/?type=detail&id=" + id;
         String preview = JSON.parseObject(HttpUtil.get(detail).getResponse()).getJSONArray("songs").getJSONObject(0).getJSONObject("al").getString("picUrl");
         String jumpUrl = "https://music.163.com/#/song?id=" + id;
-        String title = jsonObject.getString(StringVariable.NAME);
+        String title = jsonObject.getString(StringPool.NAME);
         return getMusicNeko(title, preview, artists, song, jumpUrl, "163");
     }
 
@@ -266,7 +278,7 @@ public class Cat {
         JSONArray artistsJson = jsonObject.getJSONArray("singer");
         List<String> artistList = artistsJson.stream().map(item -> {
             JSONObject object = (JSONObject) item;
-            return object.getString(StringVariable.NAME);
+            return object.getString(StringPool.NAME);
         }).collect(Collectors.toList());
         String artists = String.join("&", artistList);
         String song = null;
@@ -278,7 +290,7 @@ public class Cat {
         String url = "https://dl.stream.qqmusic.qq.com/" + JSON.parseObject(HttpUtil.get(song).getResponse()).getJSONObject("req_0").getJSONObject("data").getJSONArray("midurlinfo").getJSONObject(0).getString("purl");
         String jumpUrl = "https://y.qq.com/n/ryqq/songDetail/" + mid;
         String preview = "https:" + HttpUtil.getJson(HttpUtil.get(jumpUrl).getResponse(), "__INITIAL_DATA__").getJSONObject("detail").getString("picurl");
-        String title = jsonObject.getString(StringVariable.NAME);
+        String title = jsonObject.getString(StringPool.NAME);
         return getMusicNeko(title, preview, artists, url, jumpUrl, "qq");
     }
 
