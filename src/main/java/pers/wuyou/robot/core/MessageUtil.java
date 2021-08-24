@@ -37,6 +37,9 @@ public class MessageUtil {
             QueryWrapper<DefaultValue> defaultValueQueryWrapper = new QueryWrapper<>();
             defaultValueQueryWrapper.eq(StringPool.NAME, name);
             DefaultValue defaultValue = defaultValueMapper.selectOne(defaultValueQueryWrapper);
+            if (defaultValue == null) {
+                return new String[0];
+            }
             return new String[]{defaultValue.getValue()};
         }
         return listenerValues.toArray(new String[0]);

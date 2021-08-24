@@ -146,6 +146,12 @@ public class RobotCore implements CommandLineRunner {
         Map<Class<? extends MsgGet>, List<Integer>> listenerIds = new HashMap<>(16);
         for (Class<? extends MsgGet> msgGet : LISTENER_MAP.keySet()) {
             for (Listener listener : LISTENER_MAP.get(msgGet)) {
+                if(listener.getFilterName()!=null) {
+                    String[] filterNames = MessageUtil.getDefaultValue(listener.getFilterName());
+                    if (filterNames.length == 0) {
+                        throw new ObjectNotFoundException("未找到字段" + listener.getFilterName() + "的默认值");
+                    }
+                }
                 listenerIds.putIfAbsent(msgGet, new ArrayList<>());
                 if (listenerIds.get(msgGet).contains(listener.getId())) {
                     throw new MethodAlreadyExistException("监听方法" + listener.getClass().getSimpleName() + ":" + listener.getMethod().getName() + "已经被注册");
