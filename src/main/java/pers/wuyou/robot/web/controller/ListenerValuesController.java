@@ -21,7 +21,7 @@ public class ListenerValuesController {
     }
 
 
-    @PostMapping("add")
+    @PostMapping("")
     public RestResponse<ListenerValues> add(@RequestBody ListenerValuesVO listenerValues) {
         if (listenerValues.getId() != null) {
             listenerValuesService.updateById(listenerValues);
@@ -31,13 +31,13 @@ public class ListenerValuesController {
         return RestResponse.success();
     }
 
-    @PutMapping("edit")
+    @PutMapping("")
     public RestResponse<ListenerValues> edit(@RequestBody ListenerValues listenerValues) {
         listenerValuesService.updateById(listenerValues);
         return RestResponse.success();
     }
 
-    @DeleteMapping("delete")
+    @DeleteMapping("")
     public RestResponse<ListenerValues> delete(Integer id) {
         ListenerValues listenerValues = listenerValuesService.getById(id);
         if (listenerValues == null) {

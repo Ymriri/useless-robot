@@ -21,7 +21,7 @@ public class DefaultValueController {
         this.defaultValueService = defaultValueService;
     }
 
-    @GetMapping("search")
+    @GetMapping("")
     public RestResponse<Page<DefaultValueVO>> search(Integer page, Integer size, String name) {
         long st = System.currentTimeMillis();
         Page<DefaultValueVO> pageParam = new Page<>(page, size);
@@ -31,13 +31,13 @@ public class DefaultValueController {
     }
 
 
-    @PostMapping("add")
+    @PostMapping("")
     public RestResponse<Page<DefaultValue>> add(@RequestBody DefaultValue defaultValue) {
         defaultValueService.save(defaultValue);
         return RestResponse.success();
     }
 
-    @PutMapping("edit")
+    @PutMapping("")
     public RestResponse<Page<DefaultValue>> edit(@RequestBody DefaultValue defaultValue) {
         defaultValueService.updateById(defaultValue);
         return RestResponse.success();
