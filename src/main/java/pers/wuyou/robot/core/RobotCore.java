@@ -17,7 +17,7 @@ import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Configuration;
 import pers.wuyou.robot.common.Cat;
 import pers.wuyou.robot.common.GlobalVariable;
-import pers.wuyou.robot.common.StringVariable;
+import pers.wuyou.robot.common.StringPool;
 import pers.wuyou.robot.core.annotation.DefaultValue;
 import pers.wuyou.robot.core.annotation.Injection;
 import pers.wuyou.robot.core.annotation.InjectionValue;
@@ -38,12 +38,12 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 @Configuration
 public class RobotCore implements CommandLineRunner {
-    public static final Map<Integer, Listener> LISTENER_ID_LIST = new HashMap<>();
-    public static final Map<Integer, Listener> LISTENER_ID_LIST_BACKUP = new HashMap<>();
-    public static final Map<Class<? extends MsgGet>, Listener> SPARE_LISTENER_MAP = new HashMap<>();
-    public static final Map<Class<? extends MsgGet>, Listener> SPARE_LISTENER_MAP_BACKUP = new HashMap<>();
-    public static final Map<Class<? extends MsgGet>, List<Listener>> LISTENER_MAP = new HashMap<>();
-    public static final Map<Class<? extends MsgGet>, List<Listener>> LISTENER_MAP_BACKUP = new HashMap<>();
+    public static final HashMap<Integer, Listener> LISTENER_ID_LIST = new HashMap<>();
+    public static final HashMap<Integer, Listener> LISTENER_ID_LIST_BACKUP = new HashMap<>();
+    public static final HashMap<Class<? extends MsgGet>, Listener> SPARE_LISTENER_MAP = new HashMap<>();
+    public static final HashMap<Class<? extends MsgGet>, Listener> SPARE_LISTENER_MAP_BACKUP = new HashMap<>();
+    public static final HashMap<Class<? extends MsgGet>, ArrayList<Listener>> LISTENER_MAP = new HashMap<>();
+    public static final HashMap<Class<? extends MsgGet>, ArrayList<Listener>> LISTENER_MAP_BACKUP = new HashMap<>();
     private final ListenerMapper listenerMapper;
     private final ConfigurableApplicationContext applicationContext;
     private BotSender sender = GlobalVariable.getSender();
@@ -100,22 +100,26 @@ public class RobotCore implements CommandLineRunner {
      * @param listeners 数据库里监听器对象
      */
     private void verifyListener(List<ListenerEntity> listeners) throws IllegalAccessException, ClassNotFoundException, InstantiationException {
-        Map<Class<? extends MsgGet>, List<Listener>> newListenerMap = new HashMap<>(32);
+        Map<Class<? extends MsgGet>, ArrayList<Listener>> newListenerMap = new HashMap<>(32);
         for (ListenerEntity lis : listeners) {
             Listener listener;
             if (LISTENER_ID_LIST_BACKUP.get(lis.getId()) != null && lis.getUpdateTime() == LISTENER_ID_LIST_BACKUP.get(lis.getId()).getUpdateTime()) {
                 //数据库里没有改变
                 listener = LISTENER_ID_LIST_BACKUP.get(lis.getId());
             } else {
-                Object o = ClassUtil.getInstance(StringVariable.LISTENER, lis.getClassName());
-                Class<?> cls = ClassUtil.getClass(StringVariable.LISTENER, lis.getClassName());
+                Object o = ClassUtil.getInstance(StringPool.LISTENER, lis.getClassName());
+                Class<?> cls = ClassUtil.getClass(StringPool.LISTENER, lis.getClassName());
                 injectionField(o, cls);
                 String methodName = lis.getMethodName();
                 Method method = ClassUtil.getMethod(cls, methodName);
                 listener = lis.getListener(o, method);
             }
-            for (String type : lis.getType()) {
+            @SuppressWarnings("unchecked") Class<? extends MsgGet>[] typeList = new Class[lis.getType().length];
+            String[] lisType = lis.getType();
+            for (int i = 0; i < lisType.length; i++) {
+                String type = lisType[i];
                 Class<? extends MsgGet> msgGet = getMsgGet(type);
+                typeList[i] = msgGet;
                 if (lis.getIsSpare()) {
                     if (SPARE_LISTENER_MAP.get(msgGet) != null) {
                         throw new ObjectCountBeyondException("类型" + msgGet.getSimpleName() + "备用监听器数量过多");
@@ -128,6 +132,7 @@ public class RobotCore implements CommandLineRunner {
                 }
                 LISTENER_ID_LIST.put(listener.getId(), listener);
             }
+            listener.setType(typeList);
         }
         LISTENER_MAP.clear();
         LISTENER_MAP.putAll(newListenerMap);
@@ -187,7 +192,7 @@ public class RobotCore implements CommandLineRunner {
     @Listen(FriendAvatarChanged.class) // 监听好友头像变动事件
     @SuppressWarnings("unused")
     public void listener(MsgGet msg, ListenerContext context, AtDetection atDetection, Bot bot) {
-        if (msg instanceof PrivateMsg && Objects.equals(msg.getText(), StringVariable.LOAD_CONFIG)) {
+        if (msg instanceof PrivateMsg && Objects.equals(msg.getText(), StringPool.LOAD_CONFIG)) {
             loadAll();
             return;
         }
@@ -233,7 +238,7 @@ public class RobotCore implements CommandLineRunner {
     private boolean invoke(Listener listener, MsgGet msg, ListenerContext context, Map<Integer, Object> map, AtDetection atDetection, Bot bot) {
         try {
             Object result;
-            Map<String, Object> args = new HashMap<>();
+            Map<String, Object> args = new HashMap<>(4);
             args.put("msgGet", msg);
             if (listener.validation(args)) {
                 result = invoke(args, listener.getMethod(), listener.getInstance(), msg, context, map.get(listener.getId()), atDetection, bot);
@@ -335,12 +340,12 @@ public class RobotCore implements CommandLineRunner {
 
     private void injectionString(MsgGet msg, Parameter parameter, Object[] args, int i) {
         if (parameter.getType() == String.class) {
-            for (String str : StringVariable.QQ_CODE_PARAMETER) {
+            for (String str : StringPool.QQ_CODE_PARAMETER) {
                 if (str.equals(parameter.getName())) {
                     args[i] = msg.getAccountInfo().getAccountCode();
                 }
             }
-            for (String str : StringVariable.BOT_CODE_PARAMETER) {
+            for (String str : StringPool.BOT_CODE_PARAMETER) {
                 if (str.equals(parameter.getName())) {
                     args[i] = msg.getBotInfo().getAccountCode();
                 }
@@ -351,15 +356,15 @@ public class RobotCore implements CommandLineRunner {
                 args[i] = Cat.getAts((GroupMsg) msg);
             }
             if (parameter.getType() == List.class) {
-                args[i] = ((GroupMsg) msg).getMsgContent().getCats(StringVariable.AT);
+                args[i] = ((GroupMsg) msg).getMsgContent().getCats(StringPool.AT);
             }
             if (parameter.getType() == String.class) {
-                for (String str : StringVariable.GROUP_CODE_PARAMETER) {
+                for (String str : StringPool.GROUP_CODE_PARAMETER) {
                     if (str.equals(parameter.getName())) {
                         args[i] = ((GroupMsg) msg).getGroupInfo().getGroupCode();
                     }
                 }
-                for (String str : StringVariable.MESSAGE_PARAMETER) {
+                for (String str : StringPool.MESSAGE_PARAMETER) {
                     if (str.equals(parameter.getName())) {
                         args[i] = ((GroupMsg) msg).getMsg();
                     }
@@ -371,7 +376,7 @@ public class RobotCore implements CommandLineRunner {
         }
         if (msg instanceof PrivateMsg) {
             if (parameter.getType() == String.class) {
-                for (String str : StringVariable.MESSAGE_PARAMETER) {
+                for (String str : StringPool.MESSAGE_PARAMETER) {
                     if (str.equals(parameter.getName())) {
                         args[i] = ((PrivateMsg) msg).getMsg();
                     }
