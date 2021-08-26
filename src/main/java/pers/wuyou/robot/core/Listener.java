@@ -122,8 +122,9 @@ public class Listener {
             filterNames = MessageUtil.getDefaultValue(filterName, groupCode);
             if (isBoot) {
                 if (GlobalVariable.getBOOT_MAP().get(groupCode) == null) {
-                    GlobalVariable.getBOOT_MAP().put(groupCode, false);
-                    return false;
+                    boolean state = ListenerUtil.getGroupOpen(groupCode);
+                    GlobalVariable.getBOOT_MAP().put(groupCode, state);
+                    return state;
                 } else {
                     if (GlobalVariable.getBOOT_MAP().getOrDefault(groupCode, false).equals(Boolean.FALSE)) {
                         return false;
