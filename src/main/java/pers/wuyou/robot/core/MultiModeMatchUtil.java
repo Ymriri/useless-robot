@@ -69,7 +69,11 @@ public class MultiModeMatchUtil {
                 String value = text.substring(pos + lan, position - emit.length() + 1);
                 pos = position - emit.length() + 1;
                 lan = emit.length();
-                results.put(emit, value);
+                if(results.containsKey(emit)){
+                    results.put(emit, results.get(emit)+emit+value);
+                }else {
+                    results.put(emit, value);
+                }
             }
         }
         return results;

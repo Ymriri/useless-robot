@@ -146,7 +146,7 @@ public class RobotCore implements CommandLineRunner {
         Map<Class<? extends MsgGet>, List<Integer>> listenerIds = new HashMap<>(16);
         for (Class<? extends MsgGet> msgGet : LISTENER_MAP.keySet()) {
             for (Listener listener : LISTENER_MAP.get(msgGet)) {
-                if(listener.getFilterName()!=null) {
+                if (listener.getFilterName() != null) {
                     String[] filterNames = MessageUtil.getDefaultValue(listener.getFilterName());
                     if (filterNames.length == 0) {
                         throw new ObjectNotFoundException("未找到字段" + listener.getFilterName() + "的默认值");
@@ -180,6 +180,14 @@ public class RobotCore implements CommandLineRunner {
         }
     }
 
+    /**
+     * 总监听器
+     *
+     * @param msg         msgGet
+     * @param context     上下文
+     * @param atDetection at参数
+     * @param bot         bot信息
+     */
     @Listen(GroupMsg.class) // 群聊消息
     @Listen(PrivateMsg.class) // 私聊消息
     @Listen(FriendIncrease.class) // 监听好友增加事件
@@ -307,6 +315,11 @@ public class RobotCore implements CommandLineRunner {
                     args[i] = Long.parseLong(extra.get("time").toString());
                     continue;
                 }
+                continue;
+            }
+            if (parameter.getType() == String.class && parameter.getAnnotation(DefaultValue.class) != null) {
+                String value = parameter.getAnnotation(DefaultValue.class).value();
+                args[i] = extra.get(value).toString();
                 continue;
             }
             for (ListenType type : ListenType.values()) {

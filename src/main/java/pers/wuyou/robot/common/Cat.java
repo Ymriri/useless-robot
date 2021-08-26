@@ -88,6 +88,15 @@ public class Cat {
     }
 
     /**
+     * 是否艾特了bot
+     *
+     * @param msg 消息字符串
+     */
+    public static boolean atBot(String msg) {
+        return getAts(msg).contains(GlobalVariable.getDefaultBotCode());
+    }
+
+    /**
      * 获取艾特bot的猫猫码
      */
     public static String atBot() {
@@ -128,6 +137,7 @@ public class Cat {
         }
         return set;
     }
+
     /**
      * 获取所有艾特的QQ号
      */
