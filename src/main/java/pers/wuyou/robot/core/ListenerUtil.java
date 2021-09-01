@@ -46,7 +46,7 @@ public class ListenerUtil {
         QueryWrapper<BootStateInfo> wrapper = new QueryWrapper<>();
         wrapper.eq("group_code", group);
         BootStateInfo info = bootMapper.selectOne(wrapper);
-        return info.getState();
+        return info != null && info.getState();
     }
 
     /**
@@ -115,6 +115,9 @@ public class ListenerUtil {
             len += value.length();
             // 如果拆分的字符串数组的第一项是"",则下标向后偏移一位
             int index = split.length - i - (split[0].isEmpty() ? 2 : 1);
+            if (list.size() == 0) {
+                continue;
+            }
             if (index != -1) {
                 regString.put(argList.get(num++), list.get(index));
                 // 统计${x}对应字符的长度
@@ -201,7 +204,8 @@ public class ListenerUtil {
                             } else if (StringPool.LISTENER_FILTER_TIME.equals(str)) {
                                 // 如果是时间的话,先抽取出其中的时间字符串,然后返回其他部分的内容
                                 try {
-                                    time = Integer.parseInt(v) * 60L;
+                                    time = Integer.parseInt(v) * 60 * 1000L;
+                                    v = "";
                                 } catch (Exception e) {
                                     Map<String, Object> res = TimeUtil.getTimeWithExtra(v);
                                     time = (long) res.get("time");
