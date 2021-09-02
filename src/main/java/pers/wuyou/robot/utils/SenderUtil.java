@@ -24,6 +24,13 @@ import java.util.NoSuchElementException;
 public class SenderUtil {
     public static Sender SENDER;
 
+    public enum SendType {
+        /**
+         * 消息类型
+         */
+        GROUP, PRIVATE
+    }
+
     @Autowired
     public SenderUtil(BotManager manager) {
         SenderUtil.SENDER = manager.getDefaultBot().getSender().SENDER;
@@ -36,7 +43,7 @@ public class SenderUtil {
      * @param code    群号或QQ号
      * @param message 消息内容
      */
-    public static void sendMsg(MsgGet msgGet, String type, String code, String message) {
+    public static void sendMsg(MsgGet msgGet, SendType type, String code, String message) {
         if (message == null || message.isEmpty()) {
             return;
         }
@@ -45,12 +52,10 @@ public class SenderUtil {
         }
         try {
             switch (type) {
-                case "g":
-                case "group":
+                case GROUP:
                     SENDER.sendGroupMsg(code, message);
                     break;
-                case "p":
-                case "private":
+                case PRIVATE:
                     SENDER.sendPrivateMsg(code, message);
                     break;
                 default:
@@ -69,7 +74,7 @@ public class SenderUtil {
      * @param message 消息内容
      */
     public static synchronized void sendGroupMsg(GroupMsg msg, String group, String message) {
-        sendMsg(msg, "g", group, message);
+        sendMsg(msg, SendType.GROUP, group, message);
     }
 
     /**
@@ -99,7 +104,7 @@ public class SenderUtil {
      * @param message 消息内容
      */
     public static synchronized void sendGroupMsg(String group, String message) {
-        sendMsg(null, "g", group, message);
+        sendMsg(null, SendType.GROUP, group, message);
     }
 
     /**
@@ -110,7 +115,7 @@ public class SenderUtil {
      * @param message 消息内容
      */
     public static synchronized void sendPrivateMsg(PrivateMsg msg, String qq, String message) {
-        sendMsg(msg, "p", qq, message);
+        sendMsg(msg, SendType.PRIVATE, qq, message);
     }
 
     /**
@@ -140,7 +145,7 @@ public class SenderUtil {
      * @param message 消息内容
      */
     public static void sendPrivateMsg(String qq, String message) {
-        sendMsg(null, "p", qq, message);
+        sendMsg(null, SendType.PRIVATE, qq, message);
     }
 
 }
