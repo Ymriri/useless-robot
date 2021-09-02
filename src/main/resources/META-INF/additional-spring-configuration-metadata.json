@@ -36,6 +36,14 @@
       "name": "text-to-speech.apikey",
       "type": "java.lang.String",
       "description": "文本转语音连接apikey."
+    }, {
+      "name": "jwt.secret",
+      "type": "java.lang.String",
+      "description": "jwt secret."
+    }, {
+      "name": "JWT_SECRET",
+      "type": "java.lang.String",
+      "description": "jwt secret."
     }
   ]
 }

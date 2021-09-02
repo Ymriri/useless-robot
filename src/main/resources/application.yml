@@ -53,3 +53,5 @@ mybatis-plus:
 text-to-speech:
   url: ${TEXT_TO_SPEECH_URL}
   apikey: ${TEXT_TO_SPEECH_APIKEY}
+jwt:
+  secret: ${JWT_SECRET}
