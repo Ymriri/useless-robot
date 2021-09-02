@@ -149,7 +149,7 @@ public class RobotCore implements CommandLineRunner {
                 if (listener.getFilterName() != null) {
                     String[] filterNames = MessageUtil.getDefaultValue(listener.getFilterName());
                     if (filterNames.length == 0) {
-                        throw new ObjectNotFoundException("未找到字段" + listener.getFilterName() + "的默认值");
+                        throw new DataNotFoundException("未找到字段" + listener.getFilterName() + "的默认值");
                     }
                 }
                 listenerIds.putIfAbsent(msgGet, new ArrayList<>());
@@ -160,7 +160,7 @@ public class RobotCore implements CommandLineRunner {
                 for (Integer id : listener.getBreakListeners()) {
                     if (id != -1) {
                         if (LISTENER_ID_LIST.get(id) == null) {
-                            throw new ObjectNotFoundException("未找到被阻断的监听器" + id);
+                            throw new DataNotFoundException("未找到被阻断的监听器" + id);
                         }
                         if (LISTENER_ID_LIST.get(id).getPriority() >= listener.getPriority()) {
                             throw new PriorityIllegalException("阻断方法" + LISTENER_ID_LIST.get(id).getName() + "优先级低于被阻断方法" + listener.getName());
@@ -172,11 +172,37 @@ public class RobotCore implements CommandLineRunner {
     }
 
     @SuppressWarnings("unchecked")
-    private Class<? extends MsgGet> getMsgGet(Object type) throws ObjectNotPresentException {
+    private Class<? extends MsgGet> getMsgGet(Object type) throws DataNotPresentException {
         try {
             return (Class<? extends MsgGet>) ClassUtil.getClass(ListenType.GroupMsg.packageName + type);
         } catch (ClassNotFoundException e) {
-            throw new ObjectNotPresentException(type.toString(), new RuntimeException("监听消息类型配置不正确"));
+            throw new DataNotPresentException(type.toString(), new RuntimeException("监听消息类型配置不正确"));
+        }
+    }
+
+    /**
+     * 监听群员变动,用于更新群成员索引
+     *
+     * @param msg msgGet
+     */
+    @Listen(GroupMemberIncrease.class) // 监听群友增加事件
+    @Listen(GroupMemberReduce.class) // 监听群友减少事件
+    @SuppressWarnings("unused")
+    public void memberIndexListener(MsgGet msg) {
+        if (msg instanceof GroupMemberIncrease) {
+            if (((GroupMemberIncrease) msg).isBot()) {
+                return;
+            }
+            String accountCode = ((GroupMemberIncrease) msg).getBeOperatorInfo().getAccountCode();
+            String groupCode = ((GroupMemberIncrease) msg).getGroupInfo().getGroupCode();
+            GlobalVariable.addMemberIndex(accountCode, groupCode);
+        } else if (msg instanceof GroupMemberReduce) {
+            if (((GroupMemberReduce) msg).isBot()) {
+                return;
+            }
+            String accountCode = ((GroupMemberReduce) msg).getBeOperatorInfo().getAccountCode();
+            String groupCode = ((GroupMemberReduce) msg).getGroupInfo().getGroupCode();
+            GlobalVariable.removeMemberIndex(accountCode, groupCode);
         }
     }
 
@@ -311,7 +337,7 @@ public class RobotCore implements CommandLineRunner {
             }
             if (parameter.getType() == Long.class && parameter.getAnnotation(DefaultValue.class) != null) {
                 String value = parameter.getAnnotation(DefaultValue.class).value();
-                if ("time".equals(value)) {
+                if ("time".equals(value) && extra.get("time") != null) {
                     args[i] = Long.parseLong(extra.get("time").toString());
                     continue;
                 }
