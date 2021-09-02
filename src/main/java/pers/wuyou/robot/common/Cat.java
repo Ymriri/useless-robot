@@ -1,19 +1,16 @@
 package pers.wuyou.robot.common;
 
-import catcode.CatCodeUtil;
-import catcode.CodeTemplate;
-import catcode.MutableNeko;
-import catcode.Neko;
+import catcode.*;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import love.forte.catcode.NekoObjects;
 import love.forte.simbot.api.message.events.GroupMsg;
 import love.forte.simbot.api.message.events.MessageGet;
 import love.forte.simbot.api.message.events.MsgGet;
 import love.forte.simbot.api.sender.Getter;
 import love.forte.simbot.bot.BotManager;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import pers.wuyou.robot.utils.HttpUtil;
 
@@ -32,7 +29,6 @@ public class Cat {
     public static final CatCodeUtil UTILS = CatCodeUtil.getInstance();
     private static final CodeTemplate<Neko> NEKO_TEMPLATE = UTILS.getNekoTemplate();
     public static Getter GETTER;
-    private static String projectPath;
 
     @Autowired
     public Cat(BotManager manager) {
@@ -107,7 +103,7 @@ public class Cat {
      * 艾特全体
      */
     public static String atAll() {
-        return NEKO_TEMPLATE.atAll() + "";
+        return NekoObjects.getNekoAtAll().toString();
     }
 
     /**
@@ -315,19 +311,5 @@ public class Cat {
         map.put("brief", "[分享]" + title);
         return UTILS.toNeko("music", map);
     }
-
-    public static String getProjectPath() {
-        return projectPath;
-    }
-
-    public static void setProjectPath(String path) {
-        projectPath = path;
-    }
-
-    @Value("${project.path}")
-    public void setPath(String path) {
-        setProjectPath(path);
-    }
-
 
 }

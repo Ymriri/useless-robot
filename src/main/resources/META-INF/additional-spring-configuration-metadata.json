@@ -20,6 +20,22 @@
       "name": "MYSQL_PASSWORD",
       "type": "java.lang.String",
       "description": "数据库密码."
+    }, {
+      "name": "TEXT_TO_SPEECH_URL",
+      "type": "java.lang.String",
+      "description": "文本转语音连接."
+    }, {
+      "name": "TEXT_TO_SPEECH_APIKEY",
+      "type": "java.lang.String",
+      "description": "文本转语音连接apikey."
+    }, {
+      "name": "text-to-speech.url",
+      "type": "java.lang.String",
+      "description": "文本转语音连接."
+    }, {
+      "name": "text-to-speech.apikey",
+      "type": "java.lang.String",
+      "description": "文本转语音连接apikey."
     }
   ]
 }

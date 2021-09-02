@@ -50,5 +50,6 @@ mybatis-plus:
   # log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
   global-config:
     banner: false
-project:
-  path:
+text-to-speech:
+  url: ${TEXT_TO_SPEECH_URL}
+  apikey: ${TEXT_TO_SPEECH_APIKEY}
