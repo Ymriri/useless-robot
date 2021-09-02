@@ -1,7 +1,7 @@
 package pers.wuyou.robot.core;
 
 import pers.wuyou.robot.common.StringPool;
-import pers.wuyou.robot.exception.ObjectNotFoundException;
+import pers.wuyou.robot.exception.DataNotFoundException;
 
 import java.lang.reflect.Method;
 import java.util.HashMap;
@@ -30,7 +30,7 @@ public class ClassUtil {
             }
         }
         if (method == null) {
-            throw new ObjectNotFoundException("在类" + cls.getSimpleName() + "中未找到" + methodName + "方法");
+            throw new DataNotFoundException("在类" + cls.getSimpleName() + "中未找到" + methodName + "方法");
         }
         return method;
     }

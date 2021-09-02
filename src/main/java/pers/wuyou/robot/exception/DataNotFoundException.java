@@ -6,9 +6,9 @@ package pers.wuyou.robot.exception;
  * @author wuyou<br>
  * 2020年4月29日
  */
-public class ObjectNotFoundException extends RuntimeException {
+public class DataNotFoundException extends RuntimeException {
 
-    public ObjectNotFoundException(String message) {
+    public DataNotFoundException(String message) {
         super(message);
     }
 
