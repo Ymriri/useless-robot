@@ -128,6 +128,9 @@ public class ListenerUtil {
             // 如果长度不一致,并且字符串是结尾是最后一个${x},则设置最后一个${x}的对应值为两个字符串相差的字符串
             regString.put(argList.get(argList.size() - 1), message.substring(len));
         }
+        if (regString.size() != argList.size()) {
+            return false;
+        }
         for (String k : regString.keySet()) {
             // 遍历对应关系, 用于处理${x}${x}的情况
             String v = regString.get(k);
