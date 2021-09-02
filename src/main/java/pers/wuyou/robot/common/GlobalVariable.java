@@ -125,6 +125,10 @@ public class GlobalVariable {
         return sender.SETTER;
     }
 
+    public static Boolean isAdministrator(String uin) {
+        return ADMINISTRATOR.contains(uin);
+    }
+
     public static String getDefaultBotCode() {
         return botManager.getDefaultBot().getBotInfo().getAccountCode();
     }

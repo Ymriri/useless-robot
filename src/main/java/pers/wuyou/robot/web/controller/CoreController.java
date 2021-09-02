@@ -10,10 +10,13 @@ import org.apache.http.cookie.Cookie;
 import org.apache.http.impl.cookie.BasicClientCookie;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+import pers.wuyou.robot.common.AccountInfo;
 import pers.wuyou.robot.common.GlobalVariable;
 import pers.wuyou.robot.entity.RequestEntity;
 import pers.wuyou.robot.service.BootStateInfoService;
 import pers.wuyou.robot.utils.HttpImageUtil;
+import pers.wuyou.robot.web.annotation.CurrentUser;
+import pers.wuyou.robot.web.annotation.LoginRequired;
 import pers.wuyou.robot.web.common.RestCode;
 import pers.wuyou.robot.web.common.RestResponse;
 import pers.wuyou.robot.web.entity.GroupEntity;
@@ -88,18 +91,21 @@ public class CoreController {
     }
 
     @GetMapping("getGroupList")
-    public RestResponse<List<GroupEntity>> getGroupList(String name) {
+    @LoginRequired
+    public RestResponse<List<GroupEntity>> getGroupList(@CurrentUser AccountInfo user, String name) {
         GroupList list = GETTER.getGroupList();
         List<GroupEntity> groupInfoList = new ArrayList<>();
         list.forEach(group -> {
-            if (name == null || name.isEmpty()) {
-                groupInfoList.add(buildGroupEntity(group));
-            } else {
-                if (group.getGroupName() != null && group.getGroupName().contains(name)) {
+            if (GlobalVariable.isAdministrator(user.getCode()) || user.getGroupList().contains(group.getGroupCode())) {
+                if (name == null || name.isEmpty()) {
                     groupInfoList.add(buildGroupEntity(group));
-                }
-                if (group.getGroupCode().contains(name)) {
-                    groupInfoList.add(buildGroupEntity(group));
+                } else {
+                    if (group.getGroupName() != null && group.getGroupName().contains(name)) {
+                        groupInfoList.add(buildGroupEntity(group));
+                    }
+                    if (group.getGroupCode().contains(name)) {
+                        groupInfoList.add(buildGroupEntity(group));
+                    }
                 }
             }
         });
