@@ -21,9 +21,13 @@ import java.util.Map;
 @ConfigurationProperties(prefix = Constant.JWT)
 public class JwtUtil {
 
-    private static String SECRET;
+    private static String secret;
     private static final String ISSUER = "wuyou";
-    private static final Integer EXPIRE_TIME = 60 * 60 * 24;
+    private static final Integer EXPIRE_TIME = 60 * 60 * 24 * 1000;
+
+    public synchronized void setSecret(String secret) {
+        JwtUtil.secret = secret;
+    }
 
     /**
      * 生成token
@@ -35,7 +39,7 @@ public class JwtUtil {
             // 设置过期时间
             Date date = new Date(System.currentTimeMillis() + EXPIRE_TIME);
             // 私钥和加密算法
-            Algorithm algorithm = Algorithm.HMAC256(SECRET);
+            Algorithm algorithm = Algorithm.HMAC256(secret);
             // 设置头部信息
             Map<String, Object> header = new HashMap<>(2);
             header.put("Type", "Jwt");
@@ -60,12 +64,13 @@ public class JwtUtil {
      */
     public static AccountInfo verify(String token) {
         try {
-            Algorithm algorithm = Algorithm.HMAC256(SECRET);
+            Algorithm algorithm = Algorithm.HMAC256(secret);
             JWTVerifier verifier = JWT.require(algorithm).withIssuer(ISSUER).build();
             DecodedJWT jwt = verifier.verify(token);
             String code = jwt.getClaim("code").asString();
             return GlobalVariable.getAccountFromMemberIndex(code);
         } catch (Exception e) {
+            e.printStackTrace();
             return null;
         }
     }
