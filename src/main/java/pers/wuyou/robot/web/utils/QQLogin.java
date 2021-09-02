@@ -15,15 +15,16 @@ import java.util.Map;
 @SuppressWarnings({"unused", "AlibabaClassNamingShouldBeCamel"})
 public class QQLogin {
     private static final Map<String, Map<String, String>> COOKIES_MAP = new HashMap<>();
-
+    private static final String APP_ID = "11000101";
+    //"101964904";
     /**
      * 初始化cookie
      *
      * @return cookie
      */
-    public static Map<String, String> getAppCookies() {
+    private static Map<String, String> getAppCookies() {
         Map<String, String> cookiesMap = new HashMap<>(16);
-        String url = "https://xui.ptlogin2.qq.com/cgi-bin/xlogin?appid=11000101&target=self&style=40&s_url=https://pay.qq.com/ipay/login-proxy.html";
+        String url = "https://xui.ptlogin2.qq.com/cgi-bin/xlogin?appid="+APP_ID+"&target=self&style=40&s_url=https://pay.qq.com/ipay/login-proxy.html";
         RequestEntity requestEntity2 = HttpUtil.get(url);
         List<Cookie> cookies = requestEntity2.getCookies();
 
@@ -42,7 +43,7 @@ public class QQLogin {
     public static byte[] getLoginQrCode(String key) {
         String now = System.currentTimeMillis() + "";
         Map<String, String> cookiesMap = QQLogin.getAppCookies();
-        String url1 = String.format("https://ssl.ptlogin2.qq.com/ptqrshow?appid=11000101&e=2&l=M&s=3&d=72&v=4&t=%s&pt_3rd_aid=0", now);
+        String url1 = String.format("https://ssl.ptlogin2.qq.com/ptqrshow?appid="+APP_ID+"&e=2&l=M&s=3&d=72&v=4&t=%s&pt_3rd_aid=0", now);
         RequestEntity imgRequestEntity = HttpImageUtil.get(url1);
         List<Cookie> cookies = imgRequestEntity.getCookies();
         for (Cookie cookie : cookies) {
@@ -66,7 +67,7 @@ public class QQLogin {
         String urlCheckTimeout =
                 "https://ssl.ptlogin2.qq.com/ptqrlogin?u1=https://pay.qq.com/ipay/login-proxy.html&ptqrtoken=" + ptqrtokenStr(map.get("qrsig"))
                         + "&ptredirect=0&h=1&t=1&g=1&from_ui=1&ptlang=2052&action=0-0-" + key
-                        + "&js_ver=10233&js_type=1&login_sig=" + map.get("login_sig") + "&pt_uistyle=40&aid=11000101&";
+                        + "&js_ver=10233&js_type=1&login_sig=" + map.get("login_sig") + "&pt_uistyle=40&aid="+APP_ID+"&";
         RequestEntity requestEntity = HttpUtil.get(urlCheckTimeout, null, map);
         System.out.println(requestEntity.getResponse());
         return requestEntity;
@@ -82,7 +83,7 @@ public class QQLogin {
 ///        String now = new Date().getTime() + "";
 ///        Map<String, String> cookiesMap = getAppCookies();
 ///        String login_sig = cookiesMap.get("pt_login_sig");
-///        String url1 = String.format("https://ssl.ptlogin2.qq.com/ptqrshow?appid=11000101&e=2&l=M&s=3&d=72&v=4&t=%s&pt_3rd_aid=0", now);
+///        String url1 = String.format("https://ssl.ptlogin2.qq.com/ptqrshow?appid="+APP_ID+"&e=2&l=M&s=3&d=72&v=4&t=%s&pt_3rd_aid=0", now);
 ///        RequestEntity imgRequestEntity = HttpImageUtils.get(url1, now + ".jpg");
 ///        List<Cookie> cookies = imgRequestEntity.getCookies();
 ///        for (Cookie c : cookies) {
@@ -100,7 +101,7 @@ public class QQLogin {
 ///            String url_check_timeout =
 ///                    "https://ssl.ptlogin2.qq.com/ptqrlogin?u1=https://pay.qq.com/ipay/login-proxy.html&ptqrtoken=" + ptqrtoken_str(qrsig)
 ///                            + "&ptredirect=0&h=1&t=1&g=1&from_ui=1&ptlang=2052&action=0-0-" + now
-///                            + "&js_ver=10233&js_type=1&login_sig=" + login_sig + "&pt_uistyle=40&aid=11000101&";
+///                            + "&js_ver=10233&js_type=1&login_sig=" + login_sig + "&pt_uistyle=40&aid="+APP_ID+"&";
 ///            RequestEntity r = HttpUtils.get(url_check_timeout, null, cookiesMap);
 ///            System.out.println(r.getResponse());
 ///            if (r.getResponse().contains("ptuiCB('0'")) {

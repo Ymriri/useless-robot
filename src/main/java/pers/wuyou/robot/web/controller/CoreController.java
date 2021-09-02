@@ -6,6 +6,8 @@ import love.forte.simbot.api.message.results.GroupList;
 import love.forte.simbot.api.message.results.GroupMemberInfo;
 import love.forte.simbot.api.sender.Getter;
 import love.forte.simbot.bot.BotManager;
+import org.apache.http.cookie.Cookie;
+import org.apache.http.impl.cookie.BasicClientCookie;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import pers.wuyou.robot.common.GlobalVariable;
@@ -15,6 +17,7 @@ import pers.wuyou.robot.utils.HttpImageUtil;
 import pers.wuyou.robot.web.common.RestCode;
 import pers.wuyou.robot.web.common.RestResponse;
 import pers.wuyou.robot.web.entity.GroupEntity;
+import pers.wuyou.robot.web.utils.JwtUtil;
 import pers.wuyou.robot.web.utils.QQLogin;
 
 import java.util.ArrayList;
@@ -52,6 +55,23 @@ public class CoreController {
         RequestEntity loginState = QQLogin.getLoginState(key);
         if (loginState == null) {
             return RestResponse.error(RestCode.KEY_ILLEGAL);
+        }
+        String success = "登录成功";
+        if (loginState.getResponse().contains(success)) {
+            String uin = "";
+            for (Cookie cookie : loginState.getCookies()) {
+                if ("uin".equals(cookie.getName())) {
+                    uin = cookie.getValue().substring(1);
+                    if (GlobalVariable.getAccountFromMemberIndex(uin) == null) {
+                        return RestResponse.error(RestCode.USER_VERIFY_FAILED);
+                    }
+                }
+            }
+            if (uin.isEmpty()) {
+                return RestResponse.error(RestCode.USER_VERIFY_FAILED);
+            }
+            String token = JwtUtil.sign(uin);
+            loginState.getCookies().add(new BasicClientCookie("token", token));
         }
         return RestResponse.success(loginState);
 
