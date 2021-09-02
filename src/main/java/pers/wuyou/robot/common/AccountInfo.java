@@ -1,7 +1,9 @@
 package pers.wuyou.robot.common;
 
 import lombok.Getter;
+import lombok.Setter;
 import love.forte.simbot.api.message.results.GroupMemberInfo;
+import org.apache.http.cookie.Cookie;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -16,6 +18,8 @@ public class AccountInfo {
     private String nickname;
     private String avatarUrl;
     private List<String> groupList;
+    @Setter
+    private List<Cookie> cookies;
 
     public AccountInfo(String code, String group) {
         if (code == null || group == null) {

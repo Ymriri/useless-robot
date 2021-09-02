@@ -71,6 +71,7 @@ public class CoreController {
                 return RestResponse.error(RestCode.USER_VERIFY_FAILED);
             }
             String token = JwtUtil.sign(uin);
+            GlobalVariable.getAccountFromMemberIndex(uin).setCookies(loginState.getCookies());
             loginState.getCookies().add(new BasicClientCookie("token", token));
         }
         return RestResponse.success(loginState);
