@@ -10,9 +10,8 @@ import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.method.support.ModelAndViewContainer;
 import org.springframework.web.multipart.support.MissingServletRequestPartException;
 import pers.wuyou.robot.common.AccountInfo;
-import pers.wuyou.robot.web.annotation.CurrentUser;
 import pers.wuyou.robot.constants.Constant;
-import pers.wuyou.robot.web.entity.User;
+import pers.wuyou.robot.web.annotation.CurrentUser;
 
 /**
  * 增加方法注入，将含有 @CurrentUser 注解的方法参数注入当前登录用户
@@ -22,7 +21,7 @@ import pers.wuyou.robot.web.entity.User;
 public class CurrentUserMethodArgumentResolver implements HandlerMethodArgumentResolver {
     @Override
     public boolean supportsParameter(MethodParameter parameter) {
-        return parameter.getParameterType().isAssignableFrom(User.class)
+        return parameter.getParameterType().isAssignableFrom(AccountInfo.class)
                 && parameter.hasParameterAnnotation(CurrentUser.class);
     }
 
