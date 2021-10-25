@@ -37,13 +37,13 @@ public class SenderUtil {
     }
 
     /**
-     * 发送群消息
+     * 发送消息
      *
      * @param type    类型,group或private
      * @param code    群号或QQ号
      * @param message 消息内容
      */
-    public static void sendMsg(MsgGet msgGet, SendType type, String code, String message) {
+    public static synchronized void sendMsg(MsgGet msgGet, SendType type, String code, String message) {
         if (message == null || message.isEmpty()) {
             return;
         }
@@ -61,7 +61,7 @@ public class SenderUtil {
                 default:
             }
         } catch (NoSuchElementException e) {
-            SenderUtil.sendPrivateMsg(GlobalVariable.getADMINISTRATOR().get(0), "尝试给" + type + "[" + code + "]发送消息: " + message + " 失败");
+            sendPrivateMsg(GlobalVariable.getADMINISTRATOR().get(0), "尝试给" + type + "[" + code + "]发送消息: " + message + " 失败");
         }
 
     }
@@ -73,7 +73,7 @@ public class SenderUtil {
      * @param group   群号
      * @param message 消息内容
      */
-    public static synchronized void sendGroupMsg(GroupMsg msg, String group, String message) {
+    public static void sendGroupMsg(GroupMsg msg, String group, String message) {
         sendMsg(msg, SendType.GROUP, group, message);
     }
 
@@ -103,7 +103,7 @@ public class SenderUtil {
      * @param group   群号
      * @param message 消息内容
      */
-    public static synchronized void sendGroupMsg(String group, String message) {
+    public static void sendGroupMsg(String group, String message) {
         sendMsg(null, SendType.GROUP, group, message);
     }
 
@@ -114,7 +114,7 @@ public class SenderUtil {
      * @param qq      qq号
      * @param message 消息内容
      */
-    public static synchronized void sendPrivateMsg(PrivateMsg msg, String qq, String message) {
+    public static void sendPrivateMsg(PrivateMsg msg, String qq, String message) {
         sendMsg(msg, SendType.PRIVATE, qq, message);
     }
 

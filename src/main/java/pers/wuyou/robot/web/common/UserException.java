@@ -7,6 +7,7 @@ import pers.wuyou.robot.exception.WithTypeException;
  *
  * @author wuyou
  */
+@SuppressWarnings("unused")
 public class UserException extends RuntimeException implements WithTypeException {
 
     private static final long serialVersionUID = 1L;

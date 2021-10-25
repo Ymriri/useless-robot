@@ -18,10 +18,6 @@ public class MultiModeMatchUtil {
     int pos = 0;
     int lan = 0;
 
-    private MultiModeMatchUtil() {
-        this.root = new Node(true);
-    }
-
     public MultiModeMatchUtil(String... keywords) {
         this.root = new Node(true);
         for (String keyword : keywords) {

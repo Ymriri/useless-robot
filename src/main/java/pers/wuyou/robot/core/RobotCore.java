@@ -66,11 +66,11 @@ public class RobotCore implements CommandLineRunner {
     public void loadAll() {
         try {
             LISTENER_MAP_BACKUP.putAll(LISTENER_MAP);
-//            LISTENER_MAP.clear();
+///            LISTENER_MAP.clear();
             SPARE_LISTENER_MAP_BACKUP.putAll(SPARE_LISTENER_MAP);
             SPARE_LISTENER_MAP.clear();
             LISTENER_ID_LIST_BACKUP.putAll(LISTENER_ID_LIST);
-//            LISTENER_ID_LIST.clear();
+///            LISTENER_ID_LIST.clear();
             long start = System.currentTimeMillis();
             loadListener();
             AtomicInteger num = new AtomicInteger();
@@ -185,8 +185,8 @@ public class RobotCore implements CommandLineRunner {
      *
      * @param msg msgGet
      */
-    @Listen(GroupMemberIncrease.class) // 监听群友增加事件
-    @Listen(GroupMemberReduce.class) // 监听群友减少事件
+    @Listen(GroupMemberIncrease.class)
+    @Listen(GroupMemberReduce.class)
     @SuppressWarnings("unused")
     public void memberIndexListener(MsgGet msg) {
         if (msg instanceof GroupMemberIncrease) {
@@ -230,7 +230,7 @@ public class RobotCore implements CommandLineRunner {
     @Listen(GroupMemberSpecialChanged.class) // 监听群友头衔变动事件
     @Listen(FriendNicknameChanged.class) // 监听好友昵称变动事件
     @Listen(FriendAvatarChanged.class) // 监听好友头像变动事件
-    @SuppressWarnings("unused")
+    @SuppressWarnings({"unused", "AlibabaCommentsMustBeJavadocFormat"})
     public void listener(MsgGet msg, ListenerContext context, AtDetection atDetection, Bot bot) {
         if (msg instanceof PrivateMsg && Objects.equals(msg.getText(), StringPool.LOAD_CONFIG)) {
             loadAll();

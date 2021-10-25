@@ -95,6 +95,14 @@ public class ListenerVO {
      * 类名
      */
     private String className;
+    /**
+     * 简单类名
+     */
+    private String simpleName;
+    /**
+     * 当前群是否启用
+     */
+    private Boolean groupBoot;
 
     public static ListenerVO build(Listener listener) {
         ListenerVO that = new ListenerVO();
@@ -115,7 +123,9 @@ public class ListenerVO {
         that.setUpdateTime(listener.getUpdateTime());
         that.setMethod(listener.getMethod().getName());
         that.setClassName(listener.getInstance().getClass().getName());
+        that.setSimpleName(listener.getInstance().getClass().getSimpleName());
         that.setType(Arrays.stream(listener.getType()).map(Class::getSimpleName).collect(Collectors.joining(",")));
+        that.setGroupBoot(false);
         return that;
     }
 }

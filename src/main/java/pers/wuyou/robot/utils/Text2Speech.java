@@ -18,6 +18,7 @@ import java.io.*;
 @Component
 @Accessors(chain = true)
 @ConfigurationProperties(prefix = Constant.TEXT_TO_SPEECH)
+@SuppressWarnings("unused")
 public class Text2Speech {
     private Text2Speech() {
     }

@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
  */
 @Data
 @NoArgsConstructor
+@SuppressWarnings("unused")
 public class User {
     private String code;
     private String name;

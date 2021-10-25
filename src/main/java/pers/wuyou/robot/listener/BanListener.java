@@ -9,6 +9,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * @author wuyou
  */
+@SuppressWarnings("unused")
 public class BanListener {
     public void banMember(Setter setter, String group, Set<String> set, @DefaultValue("time") Long time) {
         for (String s : set) {

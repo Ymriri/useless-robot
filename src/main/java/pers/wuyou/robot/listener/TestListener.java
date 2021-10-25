@@ -16,7 +16,7 @@ public class TestListener {
     public void test(GroupMsg msg, PrivateMsg pMsg, String group, String qq, @DefaultValue("test") String[] str, @DefaultValue("test2") String[] str2) {
         if (msg != null) {
             LoggerUtil.info(msg.getOriginalData());
-            SenderUtil.sendGroupMsg(msg, group, Arrays.toString(str2));
+///            SenderUtil.sendGroupMsg(msg, group, Arrays.toString(str2));
         }
         if (pMsg != null) {
             LoggerUtil.info(pMsg.getOriginalData());

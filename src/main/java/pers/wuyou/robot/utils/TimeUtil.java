@@ -70,6 +70,7 @@ public class TimeUtil {
      * @param str 时间文本
      * @return 时间长度
      */
+    @SuppressWarnings("AlibabaMethodTooLong")
     public static Map<String, Object> getTimeWithExtra(String str) {
         MultiModeMatchUtil trie = new MultiModeMatchUtil("年", "月", "日", "天", "小时", "时", "分钟", "分", "秒");
         Map<String, String> map = trie.parseText(str);
@@ -85,7 +86,6 @@ public class TimeUtil {
                 unit = chineseNumber2Int(s);
             }
             int l = str.indexOf(s + keyword) + (s + keyword).length();
-            String sub = str.substring(str.indexOf(s) + s.length() - 1);
             boolean s0 = s.endsWith("半") || s.endsWith("半个");
             boolean s1 = str.contains(s + keyword + "半");
             switch (keyword) {

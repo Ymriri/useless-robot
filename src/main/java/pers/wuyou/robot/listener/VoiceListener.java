@@ -8,8 +8,9 @@ import pers.wuyou.robot.utils.Text2Speech;
 /**
  * @author wuyou
  */
+@SuppressWarnings("unused")
 public class VoiceListener {
-    public void sayText(String group, String qq, @DefaultValue("${0}") String text){
+    public void sayText(String group, @DefaultValue("${0}") String text) {
         String path = Text2Speech.textToSpeech(text);
         System.out.println(path);
         SenderUtil.sendGroupMsg(group, Cat.getRecord(path));
